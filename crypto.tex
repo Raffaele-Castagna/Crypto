@@ -7,6 +7,7 @@
 %\usepackage[hidelinks]{hyperref,xcolor} % link di pagina
 \usepackage[bottom]{footmisc} % note appiccicate al fondo della pagina
 \usepackage{float} % per posizionamento immagini
+\usepackage{cancel}
 
 \geometry{tmargin=.75in, bmargin=.75in, lmargin=.75in, rmargin = .75in}  
 
@@ -32,7 +33,7 @@
 \definecolor{mauve}{rgb}{0.58,0,0.82}
 
 
-\title{Latex Template }
+\title{Cryptography Notes }
 \author{Raffaele Castagna}
 
 \date{Academic Year 2025-2026}
@@ -125,8 +126,67 @@ Consider $\mathcal{M'} = \{Dec(k,c): k \in \mathcal{K}\}$ and assume $|\mathcal{
 \end{center}
 Now:\\
 \begin{center}
-    Pr[M=m] = $|\mathcal{M}|^{-1}$ but Pr[M=m | C=c] = 0
+   $ Pr[M=m] = |\mathcal{M}|^{-1} \text{ but } Pr[M=m | C=c] = 0 $
 \end{center}
 
 \end{proof}
+
+\subsection{Proof that the lemmas imply eachother}
+Let us prove that $1 \implies 2 \implies 3 \implies 1$\\\\
+Let us start by proving that $1\implies2$:
+\begin{proof}
+We know that $Pr[M=m] = Pr[M=m|C=c] \rightarrow \frac{Pr[M=m \wedge C=c]}{Pr[C=c]} = Pr[M=m \wedge C=c] \\= Pr[M=m] * Pr[C = c]$
+and therefore we have proved their independence, so $I(M;C) = 0$
+\end{proof}
+Let us prove that $2 \implies 3$
+\begin{proof}
+Let us fix an m from M and c from C:\\
+$Pr[Enc(K,m) = c] = Pr[Enc(K,M) = c | M = m] \implies Pr[C = c | M = m] = Pr[C=c]$ \\Remember that Enc(...) is c!\\\\ We do the same thing for $m'$ and we get: 
+$Pr[C=c | M=m] = Pr[C=c]$ for both of them.\\
+Therefore: $Pr[Enc(K,m')= c] = Pr[C=c]$
+\end{proof}
+
+And now $3 \implies 1$:
+Take any c from C:\\
+$Pr[C=c] = Pr[C=c|M=m]$ by 2 (we are claiming this)\\\\
+If the claim is true then:\\
+$Pr[M=m|C=c] * Pr[C=c] = Pr[M=m \wedge C=c] = Pr[C = c | M = m] * Pr[M=m] \implies$\\\\
+\begin{center}
+   $\implies$ $Pr[M=m] = \frac{Pr[M=m | C=c] * \cancel{Pr[C=c]}}{\cancel{Pr[C=c|M=m]}}$
+
+\end{center}
+However we still need to prove the claim:\\
+$$Pr[C=c] = \sum_{m'}^{}Pr[C=c \wedge M=m'] = \sum_{m'}^{}Pr[C=c | M=m'] * Pr[M=m'] =$$\\ $$\sum_{m'}^{}Pr[Enc(K,m') = c | M=m'] * Pr[M=m']\\= \sum_{m'}^{}Pr[Enc(K,m') = c] * Pr[M=m'] $$\\
+$$ \sum_{m'}^{}Pr[Enc(k,m) = c] * Pr[M=m'] = Pr[Enc(k,m) = c] * \sum_{m'}^{}Pr[M=m'] \impliedby 1$$\\
+$$ Pr[Enc(k,m) = c] = Pr[Enc(K,M) = c | M=m] \rightarrow Pr[C=c | M=m]$$
+\subsection{Message Authentication Codes}
+\begin{center}
+    \includegraphics[scale=0.5]{img/MAC.png}
+\end{center}
+In case it is $\tau$ then we accept it, else no.\\
+There is no need to prove correctness as $\tau$ is deterministic, so if we had the same k and m, we should get the same $\tau$\\\\
+\textbf{Unforgeability}\\\\
+It should be hard to forge $\tau'$ such on msg m' and it should be hard to produce (m,$\tau$) as long as m' $\neq$ m\\
+\begin{defn}
+\textbf{Statistical secure MAC} We say that $\prod$ = Tag has $\epsilon$-statistical security (unforgeability) if  $\text{ }\forall m,m'\text{ } \in \mathcal{M} \text{ with } m \neq m'\text{ } \forall \tau,\tau' \in \mathcal{T}$:\\
+$$Pr[Tag(K,m') = \tau'\text{ } | \text{ }Tag(K,m)= \tau] \leq \epsilon$$
+\end{defn}
+\textbf{TLDR}: Fix \underline{any} m,m' with m' $\neq$ m take $\tau,\tau'$ on the condition that $\tau$ is tag of m and given $\tau'$, it is always less than or equal to $\epsilon$\\
+Here $\epsilon$ is a parameter e.g. $2^{-80}$\\
+\textbf{Exercise} Let us prove that it is impossible to get $\epsilon = 0$\\
+Because a random $\tau' \in \mathcal{T}$ has probability $\geq \frac{1}{|\mathcal{T}|}$ to be correct it is impossible.\\\\
+Note that the definition is valid for One-Time!\\
+We will show:
+\begin{itemize}
+    \item The notion is Achievable
+    \item It's inefficient, in fact:
+\end{itemize}
+\begin{thm}
+    Any t-time $2^{-\lambda}$ statistically secure Tag has a key of some (t+1)*$\lambda$
+\end{thm}
+We will now show that any form of hash function with a particular property satisfies the definition.\\
+\begin{defn}
+    \textbf{Pairwise independence} A family $\mathcal{H} = \{h_k: \mathcal{M} \rightarrow \mathcal{T}\}_{k \in \mathcal{K}}$ is pairwise independant if: $\forall m,m' \in \mathcal{M} \text{s.t.} m \neq m'$ then:
+    $(h(K,m),h(K,m'))$ is uniform over $\mathcal{T}^2 = \mathcal{T} \times \mathcal{T}$ for K uniform over $\mathcal{K}$
+\end{defn}
 \end{document}
