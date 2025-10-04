@@ -241,7 +241,7 @@ Now we need to instantiate it, here is a construction, Let p be a prime:\\
 Alice and Bob need a \textbf{random} key, how can they generate it?\\
 Randomness is crucial for crypto, and two components are necessary in any RNG (e.g. Fortuna, /dev/rand):\\
 \begin{itemize}
-    \item Randomness extraction: By measuring physical quantities we can get an \textbf{unpredictable} sequence of bits (Not necessarily uniform or for cheap!)\\ From this we extract a \textbf{ranom} Y which is short (e.g. 256 bits)
+    \item Randomness extraction: By measuring physical quantities we can get an \textbf{unpredictable} sequence of bits (Not necessarily uniform or for cheap!)\\ From this we extract a \textbf{random} Y which is short (e.g. 256 bits)
     \item Expand it to any amount (polynomial) using a psedorandom generator (PRG) - but this requires computational assumptions.
 \end{itemize}
 We want to understand how to extract from an unpredictable source X.\\
@@ -260,7 +260,7 @@ We want to generalize this question, ideally we want to design a function Ext th
     The min-entropy of X is: $H_{\infty} = - \log_2\max{\Pr[X=x]}$
 \end{defn}
 \textbf{Example}:
-Let $X \equiv U_m$ Uniform over $\{0,1\}^{N}$. $ H_{\infty} = N$\\
+Let $X \equiv U_m$ Uniform over $\{0,1\}^{N}$. $ H_{\infty} (X) = N$\\
 If X is a costant we have $H_\infty (X)$ = 0
 \\\\
 Here's the next best thing:\\
@@ -287,7 +287,7 @@ $$|Pr[A(z)=1 : z \in Z] - Pr[A(z)=1 : z \in Z']| \leq \epsilon$$
 \end{thm}
 \begin{lem}
     Let Y be a RV over $\mathcal{Y}$. Such that:
-    $$Col(y) = \sum_{y \in \mathcal{Y}} Pr[Y=y]^2 \leq \frac{1}{|\mathcal{Y}|} * (1 + 4\epsilon^2)$$
+    $$Col(Y) = \sum_{y \in \mathcal{Y}} Pr[Y=y]^2 \leq \frac{1}{|\mathcal{Y}|} * (1 + 4\epsilon^2)$$
     Then, SD(Y,U) $\leq \epsilon$
 \end{lem}
 \end{document}
