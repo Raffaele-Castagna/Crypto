@@ -115,8 +115,8 @@ and therefore:\\
 \end{center}
 There seem to be some limitations, the key can only be used once and it must as long as the message,lets assume we encrypt m'' and m':
 $c_1 = k \oplus m_1\text{    } c_2 = k \oplus m_2 \text{ therefore } c_1 \oplus c_2 = m_1 \oplus m_2$, so if I know a pair $(m_1,c_1) \text{ then I could compute } m_2$, therefore we cannot encrypt two messages with the same key.
-\begin{thm}
-Let $\prod$ be a SKE then we have $|\mathcal{K}| \ge |\mathcal{M}|$.
+\begin{thm}[Shannon]
+Let $\prod$ be any perfectly secret SKE then we have $|\mathcal{K}| \ge |\mathcal{M}|$.
 \end{thm}
 \begin{proof}
 Take $\prod$ to be uniform over $\mathcal{M}$. Take any c s.t. Pr[C=c] $>$ 0.\\
@@ -189,4 +189,105 @@ We will now show that any form of hash function with a particular property satis
     \textbf{Pairwise independence} A family $\mathcal{H} = \{h_k: \mathcal{M} \rightarrow \mathcal{T}\}_{k \in \mathcal{K}}$ is pairwise independant if: $\forall m,m' \in \mathcal{M} \text{s.t.} m \neq m'$ then:
     $(h(K,m),h(K,m'))$ is uniform over $\mathcal{T}^2 = \mathcal{T} \times \mathcal{T}$ for K uniform over $\mathcal{K}$
 \end{defn}
+
+\begin{thm}
+    Any family $\mathcal{H}$ of pairwise independent functions directly gives a $\epsilon = \frac{1}{|\mathcal{T}|}-\text{statistically}$ secure MAC.
+\end{thm}
+\begin{proof}
+    Fix any $m \in \mathcal{M}, \tau \in \mathcal{T}$:\\
+    $$Pr[Tag(K,m) = \tau] =$$ \\$$ Pr_k[h(K,m)= \tau] = \frac{1}{|\mathcal{T}|}\text{ by pairwise independence}$$\\
+    Similiarly, for any m,m' s.t. m $\neq$ m', $\tau,\tau' \in \mathcal{T}$.
+    $$Pr_k[Tag(K,m)= \tau \wedge Tag(K,m') = \tau'] =$$
+    $$Pr_k[h(K,m)=\tau \wedge h(K,m')= \tau'] = \frac{1}{|\mathcal{T}|^2}$$
+    By Bayes:
+    $$Pr[Tag(K,m')= \tau' | Tag(K,m) = \tau] = $$
+    $$\frac{Pr[h(K,m;) = \tau' \wedge h(K,m) = \tau]}{Pr[h(K,m) = \tau]} =$$
+    $$\frac{\frac{1}{|\mathcal{T}|^2}}{\frac{1}{|\mathcal{T}|}} = \frac{1}{|\mathcal{T}|}$$
+
+\end{proof}
+Now we need to instantiate it, here is a construction, Let p be a prime:\\
+    $$h_{a,b}(m) = am+b \mod p $$
+    $$k = (a,b) \in \Z_{p}^2 = \mathcal{K}$$
+    $$\Z_p = \mathcal{M} =\mathcal{T}$$
+\begin{lem}
+    The above $\mathcal{H}$ is \textit{pairwise independant}.
+\end{lem}
+\begin{proof}
+    For all $m,m' \in \Z_p , \tau,\tau' \in \Z_p$ with $m \neq m'$\\
+    $$\Pr_{(a,b) \in \Z_{p}^2}[h_{a,b}(m) = \tau \wedge h_{a,b}(m') = \tau'] =$$
+    $$\Pr_{(a,b) \in \Z_{p}^2}\left[
+        \begin{pmatrix}
+        m & 1 \\ m' & 1
+        \end{pmatrix}
+        \begin{pmatrix}
+            a \\ b
+        \end{pmatrix} =
+        \begin{matrix}
+            \tau \\ \tau'
+        \end{matrix}\right] = $$ 
+        $$\Pr_{(a,b) \in \Z_{p}^2}\left[
+        \begin{pmatrix}
+            a \\ b
+        \end{pmatrix} =
+        \begin{pmatrix}
+        m & 1 \\ m' & 1
+        \end{pmatrix}
+        \begin{matrix}
+            \tau \\ \tau'
+        \end{matrix}\right] = $$
+        $$\frac{1}{p^2} = \frac{1}{|\Z_{p}|^2} = \frac{1}{|\mathcal{T}|^2}$$
+\end{proof}
+\subsection{Randomness Extraction}
+Alice and Bob need a \textbf{random} key, how can they generate it?\\
+Randomness is crucial for crypto, and two components are necessary in any RNG (e.g. Fortuna, /dev/rand):\\
+\begin{itemize}
+    \item Randomness extraction: By measuring physical quantities we can get an \textbf{unpredictable} sequence of bits (Not necessarily uniform or for cheap!)\\ From this we extract a \textbf{ranom} Y which is short (e.g. 256 bits)
+    \item Expand it to any amount (polynomial) using a psedorandom generator (PRG) - but this requires computational assumptions.
+\end{itemize}
+We want to understand how to extract from an unpredictable source X.\\
+\textbf{Example \textit{Von Neumann Extractor}}
+Assume $B \in {0,1} \text{ s.t. } \Pr[B=0] = p < \frac{1}{2}$.
+\begin{itemize}
+    \item Sample $b_1 \in B, b_2 \in B$
+    \item if $b_1 = b_2$ then Resample
+    \item Else output 1 $\iff b_1 = 0, b_2 = 1, \text{ or 0 if } b_1 = 1, b_2 =0$
+\end{itemize}
+Assuming it outputs something, this will be s.t.\\
+$$\Pr[\text{Output 0}] = Pr[\text{Output 1}] = p*(1-p)$$
+$$\Pr[\text{No output after N tries}] = (1-2p(1-p))^N \text{ which becomes small for large enough N}$$
+We want to generalize this question, ideally we want to design a function Ext that takes a random variable X and outputs an uniform Ext(X), but this is impossible as the source must be unpredictable and Ext is deterministic
+\begin{defn}[Min-Entropy]
+    The min-entropy of X is: $H_{\infty} = - \log_2\max{\Pr[X=x]}$
+\end{defn}
+\textbf{Example}:
+Let $X \equiv U_m$ Uniform over $\{0,1\}^{N}$. $ H_{\infty} = N$\\
+If X is a costant we have $H_\infty (X)$ = 0
+\\\\
+Here's the next best thing:\\
+Design Ext that extracts UNIFORM $Y=Ext(X)$ for every X s.t. $H_\infty (X) \geq k$\\
+But this is also impossible, even if $$Ext(X)= b \in \{0,1\}$$ $$k = n-1$$ $$x \in \{0,1\}^n$$\\
+And here's why: fix any Ext:$\{0,1\}^n \rightarrow {0,1}$ and let $b \in {0,1}$ be the output of maximing $|Ext^{-1}(b)|$\\
+\begin{center}
+    \includegraphics[scale=0.3]{img/expl.png}
+\end{center}
+The bad X: Define X to be Uniform over $Ext^{-1}(b)$. Since it is uniform: $H_\infty(X) \geq n-1$ but $Ext(X) = b$ so not uniform.\\\\
+Solution: Swap the quantifiers.
+\begin{defn}[Seeded Extractor]
+    A function $Ext: \{0,1\}^n \times \{0,1\}^d \rightarrow \{0,1\}$ is a (k,$\epsilon$)-seeded extractor if for every X over s.t. $H_\infty(X) \geq k$: $$(S,Ext(S,X)) \approx_\epsilon (S,U_e)$$
+    for $S \equiv U_d$ (uniform over $\{0,1\}^d$). (Note that $(S,U_e) \equiv U_{d+e}$).
+\end{defn}
+What does this mean? Thre is a standard way to measure distance between distributionsL
+$$ Z \equiv_\epsilon Z' \iff SD(Z,Z') \leq \epsilon$$
+$$ SD(Z,Z') = \frac{1}{2} \sum_{z} |Pr[Z=z] - Pr[Z'=z]|$$
+This is equivalent: $\forall$ Unbounded adversary A:
+$$|Pr[A(z)=1 : z \in Z] - Pr[A(z)=1 : z \in Z']| \leq \epsilon$$
+\begin{thm}[Leftover Hash Lemma]
+    Let $\mathcal{H} = \{h_s: \{0,1\}^n \rightarrow \{0,1\}^l\}_{s \in \{0,1\}^d}$ be a family of pairwise independent hash functions. Then Ext(x,s) = $h_s(x)$ is a (k,$\epsilon$)-seeded extractor for k $\geq l + 2\log_2(\frac{1}{\epsilon})$-2.
+
+\end{thm}
+\begin{lem}
+    Let Y be a RV over $\mathcal{Y}$. Such that:
+    $$Col(y) = \sum_{y \in \mathcal{Y}} Pr[Y=y]^2 \leq \frac{1}{|\mathcal{Y}|} * (1 + 4\epsilon^2)$$
+    Then, SD(Y,U) $\leq \epsilon$
+\end{lem}
 \end{document}
