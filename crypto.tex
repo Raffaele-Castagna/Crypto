@@ -276,7 +276,7 @@ Solution: Swap the quantifiers.
     A function $Ext: \{0,1\}^n \times \{0,1\}^d \rightarrow \{0,1\}$ is a (k,$\epsilon$)-seeded extractor if for every X over s.t. $H_\infty(X) \geq k$: $$(S,Ext(S,X)) \approx_\epsilon (S,U_e)$$
     for $S \equiv U_d$ (uniform over $\{0,1\}^d$). (Note that $(S,U_e) \equiv U_{d+e}$).
 \end{defn}
-What does this mean? Thre is a standard way to measure distance between distributionsL
+What does this mean? Thre is a standard way to measure distance between distributions:
 $$ Z \equiv_\epsilon Z' \iff SD(Z,Z') \leq \epsilon$$
 $$ SD(Z,Z') = \frac{1}{2} \sum_{z} |Pr[Z=z] - Pr[Z'=z]|$$
 This is equivalent: $\forall$ Unbounded adversary A:
@@ -290,4 +290,85 @@ $$|Pr[A(z)=1 : z \in Z] - Pr[A(z)=1 : z \in Z']| \leq \epsilon$$
     $$Col(Y) = \sum_{y \in \mathcal{Y}} Pr[Y=y]^2 \leq \frac{1}{|\mathcal{Y}|} * (1 + 4\epsilon^2)$$
     Then, SD(Y,U) $\leq \epsilon$
 \end{lem}
+\begin{proof}
+    $$SD(Y,U) = \frac{1}{2} \sum_{y \in \mathcal{Y}} |Pr[Y=y] - \Pr[U=y]|$$
+    $$\frac{1}{2} \sum_{y \in \mathcal{Y}} |Pr[Y=y] - \frac{1}{|\mathcal{Y}|}|$$
+    $$\text{Let } q_y = Pr[Y=y] - \frac{1}{|\mathcal{Y}|}$$
+    $$\text{Let } s_y = \begin{cases}
+        1 \text{ if } q_y \geq 0\\
+        -1 \text{ else}
+    \end{cases}$$
+    $$\text{Hence } SD(Y,U) = \frac{1}{2} \sum_{y \in \mathcal{Y}} s_y q_y$$
+    $$= \frac{1}{2} \langle s,q \rangle \leq \frac{1}{2} \sqrt{<\overrightarrow{q},\overrightarrow{q}> * <\overrightarrow{s},\overrightarrow{s}>} \text{ by Cauchy-Schwarz}$$
+    $$ = \frac{1}{2} \sqrt{\sum_{y \in \mathcal{Y}} q_y^2 * |\mathcal{Y}|}$$
+
+Now, We analyze the term $\sum_{y \in \mathcal{Y}} q_y^2$:
+$$\sum_{y \in \mathcal{Y}} q_y^2 = \sum_{y \in \mathcal{Y}} (Pr[Y=y] - \frac{1}{|\mathcal{Y}|})^2 =$$
+$$\sum_{y \in \mathcal{Y}} Pr[Y=y]^2 + \frac{1}{|\mathcal{Y}|^2} -2\frac{Pr[Y=y]}{|\mathcal{Y}|} =$$
+$$ \underbrace{\sum_{y \in \mathcal{Y}} \Pr[Y=y]^2}_{Col(Y)} + \frac{1}{|\mathcal{Y}|} - 2\frac{1}{|\mathcal{Y}|} =$$
+$$Col(Y) - \frac{1}{|\mathcal{Y}|} \leq \frac{4\epsilon^2}{|\mathcal{Y}|}$$
+Then:
+$$SD(Y,U) \leq \frac{1}{2} \sqrt{\frac{4\epsilon^2}{\cancel{|\mathcal{Y}|}} * \cancel{|\mathcal{Y}|}} = \epsilon$$
+\end{proof}
+Next we apply the lemma to prove the Leftover Hash Lemma:
+\begin{proof}
+    $$Y = (S,Ext(X,S)) = (S,h(S,X))$$
+and compute Col(Y):
+$$Col(Y) = \sum_{y \in \mathcal{Y}\Pr[Y=y]^2} = \Pr[Y=Y']$$
+$$= \Pr[S=S' \wedge h(S,X) = h(S',X')]$$
+$$= \Pr[S=S' \wedge h(S,X) = h(S,X')]$$
+$$= \Pr[S=S'] * \Pr[h(S,X) = h(S,X')]$$
+$$= \frac{1}{2^d} * \Pr[h(S,X) = h(S,X')]$$
+$$ = \frac{1}{2^d} * (\Pr[X=X'] + \Pr[h(S,X) = h(S,X') \wedge X \neq X'])$$
+$$ \leq \frac{1}{2^d} * (\frac{1}{2^k} + \frac{1}{2^l}) \text{ by pairwise independence and } H_\infty(X) \geq k$$
+$$ = \frac{1}{2^{d+l}}(1 + 2^{l-k}) \leq \frac{1}{2^{d+l}}(2^{2-2\log_2(\frac{1}{\epsilon})}+ 1)$$
+$$ = \frac{1}{|\mathcal{Y}|} * (1 + 4\epsilon^2)$$ 
+\end{proof}
+\section{Computational Security}
+We know that withouth any assumptions we can do Symmetric crypto and randomness generation, with some strong limitations.\\
+\begin{itemize}
+    \item Privacy: $|msg| = |key|$ and one-time use
+    \item Integrity: same as above.
+    \item Randomness We can't extract more than k from $p_y k$
+\end{itemize}
+We want to overcome all these limitations. We'll do so off of the base of some assumptions
+\begin{itemize}
+    \item Adversary is Computationally Bounded
+    \item Hard Problems exist
+\end{itemize}
+We will make conditional statements:
+\begin{thm}
+    If Problem X is hard (against efficient solvers), Then cryptosystem $\prod$ is secure (against efficient adversaries)
+\end{thm}
+Consequence: if $\prod$ is insecure, $\exists$ efficient solver for X!\\
+Depending on what X is, the above could be \textbf{Groundbreaking}.\\\\
+\textbf{Examples}:\\
+X = $"P \neq NP"$
+X = "Factoring is hard"\\
+X = "Discrete Log is hard"\\\\
+We are not able to just assume $P \neq NP$, we need a stronger assumption:
+\textbf{One-Way Functions}: These are functions that are easy to compute but hard to invert.\\
+Clearly OWF$ \implies P \neq NP$, why?\\
+Because if $P=NP$, OWF do not exist as checking if f(x) = y is efficient and this it's in NP=P\\
+We cannot exclude that $P \neq NP$ but still,OWF do not exist.\\\\
+To better demonstrate this, we can refer to the following worlds created by Russel Impagliazzo:
+\begin{itemize}
+    \item Algorithmica: P=NP
+    \item Heuristica: P $\neq$ NP but no "average-hard" problems
+    \item Pessiland: $P\neq NP$ and "average-hard" problems exist, but no OWF
+    \item Minicrypt: OWFs exist
+    \item Cryptomania: OWF exist + Public-key crypto exist
+\end{itemize}
+First we must start by fixing a model of computation: Turing Machines\\
+efficient computation = polynomial time TMs.\\
+Let's be generous: Adversaries can use any amount (polynomial) of randomness: Probabilistic Polynomial Time (PPT) TMs.\\
+In what comes next we could define two approaches:
+\begin{itemize}
+    \item \textbf{Concrete Security} Security hols w.r.t. t-time Tms except w.p. $\leq \epsilon$ (e.g.  $t= 2^20$ steps, $\epsilon = 2^{-80}$)
+    \item \textbf{Asymptotic Security} Let $\lambda$ be a security parameter. Adversaries are poly($\lambda$)-time PPT TMs ($\epsilon$ = negligeble $=$ negl($\lambda$))\\
+\end{itemize}
+\begin{defn}[Negligible]
+    $\epsilon: \N \rightarrow \R$ is negligible if $\forall p(\lambda)=\text{poly}(\lambda) \text{ } \exists \lambda_0 \in \N \text{ s.t. } \forall \lambda > \lambda_0: \epsilon(\lambda) \leq \frac{1}{p(\lambda)}$
+\end{defn}
+(In other words, $\epsilon(\lambda) \leq O(\frac{1}{p(\lambda)}) \text{  }\forall p(\lambda) = \text{poly}(\lambda))$\\
 \end{document}
