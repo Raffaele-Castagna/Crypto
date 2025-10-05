@@ -314,7 +314,7 @@ Next we apply the lemma to prove the Leftover Hash Lemma:
 \begin{proof}
     $$Y = (S,Ext(X,S)) = (S,h(S,X))$$
 and compute Col(Y):
-$$Col(Y) = \sum_{y \in \mathcal{Y}\Pr[Y=y]^2} = \Pr[Y=Y']$$
+$$Col(Y) = \sum_{y \in \mathcal{Y}}\Pr[Y=y]^2 = \Pr[Y=Y']$$
 $$= \Pr[S=S' \wedge h(S,X) = h(S',X')]$$
 $$= \Pr[S=S' \wedge h(S,X) = h(S,X')]$$
 $$= \Pr[S=S'] * \Pr[h(S,X) = h(S,X')]$$
