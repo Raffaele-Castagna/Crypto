@@ -276,7 +276,7 @@ Solution: Swap the quantifiers.
     A function $Ext: \{0,1\}^n \times \{0,1\}^d \rightarrow \{0,1\}$ is a (k,$\epsilon$)-seeded extractor if for every X over s.t. $H_\infty(X) \geq k$: $$(S,Ext(S,X)) \approx_\epsilon (S,U_e)$$
     for $S \equiv U_d$ (uniform over $\{0,1\}^d$). (Note that $(S,U_e) \equiv U_{d+e}$).
 \end{defn}
-What does this mean? Thre is a standard way to measure distance between distributions:
+What does this mean? There is a standard way to measure distance between distributions:
 $$ Z \equiv_\epsilon Z' \iff SD(Z,Z') \leq \epsilon$$
 $$ SD(Z,Z') = \frac{1}{2} \sum_{z} |Pr[Z=z] - Pr[Z'=z]|$$
 This is equivalent: $\forall$ Unbounded adversary A:
@@ -371,4 +371,38 @@ In what comes next we could define two approaches:
     $\epsilon: \N \rightarrow \R$ is negligible if $\forall p(\lambda)=\text{poly}(\lambda) \text{ } \exists \lambda_0 \in \N \text{ s.t. } \forall \lambda > \lambda_0: \epsilon(\lambda) \leq \frac{1}{p(\lambda)}$
 \end{defn}
 (In other words, $\epsilon(\lambda) \leq O(\frac{1}{p(\lambda)}) \text{  }\forall p(\lambda) = \text{poly}(\lambda))$\\
+\subsection{Pseudorandomness}
+This is our first step towards efficient symmetric crypto. Moreover, pseudorandomness is used in modern computers to simulate real randomness. We will see that OWF are enough for pseudorandomness.\\
+\begin{defn}[OWF]
+    A function $f :\{0,1\}^n \rightarrow \{0,1\}^n$ is One-Way, if: $\forall PPT \mathcal{A}$:
+    $$\Pr_{x \leftarrow\{0,1\}^n}[f(x')= y : y = f(x); x' \leftarrow \mathcal{A}(y)] \leq \text{negl}(n)$$
+\end{defn}
+Informally, it goes to zero faster than any inverse of a polynomial function.\\\\
+Example of negl(n) is $2^{-n}$\\
+An alternative way to think about it:
+\begin{center}
+    \includegraphics[scale=0.4]{img/Comp_sec/Alternative1.png}
+\end{center}
+\begin{defn}[Pseudorandomness]
+    Pseudorandomness is a sequence of bits that are not random, but look random. We capture this requirement using \textbf{Indistinguishability (computational)}.\\
+    We have already seen something like this in SD. Given X,Y RVs over some domain, SD(X,X') $\leq \epsilon$ is equivalent to: $\forall \mathcal{D}$ (adversary):
+    $$|Pr[\mathcal{D}(x)=1 : x \leftarrow X] - Pr[\mathcal{D}(y)=1 : y \leftarrow X']| \leq \epsilon$$ 
+\end{defn}
+\begin{center}
+    \includegraphics[scale=0.4]{img/Comp_sec/Alt2.png}
+\end{center}
+\begin{defn}
+    X ($X_n$),Y ($Y_n$) are computationally indistinguishable ($ X \approx_c Y$) if $\forall PPT \mathcal{D}$:
+    $$|Pr[\mathcal{D}(z)=1 : z \leftarrow X_n] - Pr[\mathcal{D}(z)=1 : y \leftarrow Y_n]| \leq \text{negl}(n)$$
+\end{defn}
+With this we cand efine pseudorandomness:
+\begin{defn}[Pseudorandom Generator (PRG)]
+    A function $G: \{0,1\}^n \rightarrow \{0,1\}^{n+l}$ with $l \geq 1$ (The Stretch) is secure if:
+    $$G(U_n) \approx_c U_{n+l}$$
+    $$U_n \equiv \text{ uniform over } \{0,1\}^n$$
+    $$U_{n+l} \equiv \text{ uniform over } \{0,1\}^{n+l}$$
+\end{defn}
+\begin{center}
+    \includegraphics[scale=0.4]{img/Comp_sec/pseudogen.png}
+\end{center}
 \end{document}
