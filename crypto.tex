@@ -405,4 +405,69 @@ With this we cand efine pseudorandomness:
 \begin{center}
     \includegraphics[scale=0.4]{img/Comp_sec/pseudogen.png}
 \end{center}
+Let's understand how to build PRGs:
+\begin{itemize}
+    \item Use a randomness extracotr to get a uniform seed $s \in \{0,,1\}^n$.
+    \item Define a simple PRG $G:\{0,1\}^n \rightarrow \{0,1\}^{n+1}$ with minimal stretch $l = 1$.
+    \item Use G to stretch any $l(n) = poly(n)$.
+\end{itemize}
+Theory vs Practice:
+\begin{itemize}
+    \item Randomness extraction is what we already studied. But in practice it is done using Hash Functions.
+    \item Theoretical G can be obtained from any OWF. Practical G is Heuristic
+    \item Stretch is the same
+    \item In practice the seed is refreshed periodically collecting new entropy
+\end{itemize}
+\begin{thm}
+    If there exists a PRG $G: \{0,1\}^n \rightarrow \{0,1\}^{n+1},\text{ then there exists a PRG } G^l : \{0,1\}^n \rightarrow \{0,1\}^{n+l} \text{ for any } l(n)=poly(n) $
+\end{thm}
+\begin{center}
+    \includegraphics[scale=0.4]{img/Comp_sec/BlueGen.png}
+\end{center}
+\begin{proof}
+    Assume $G^l$ not secure, $\exists$ PPT $\mathcal{D}^l$ that can distinguish $G^l(U_n)$ from $U_{n+l}$ from $U_{n+l}$ with probability $\geq \frac{1}{p(n)}$ for some polynomial. We want to buildt PPT $\mathcal{D}$ that can
+    distinguish $G(U_n)$ from $U_{n+1}$ with probability $\frac{1}{p(n)}$. ($\mathcal{D}$ is called a reduction)
+    \begin{center}
+        \includegraphics[scale=0.4]{img/Comp_sec/Hybrid_arg_img.png}
+    \end{center}
+\section*{Hybrid argument}
+
+\[
+H_0(n) \equiv G^{n}(U_m)
+\]
+
+\[
+b_1, \ldots, b_\ell \leftarrow \{0,1\}^\ell
+\]
+
+\[
+H_i(M) \equiv
+\begin{cases}
+b_1, \ldots, b_i \leftarrow \{0,1\} \\
+s_i \leftarrow \{0,1\}^n \\
+(b_{i+1}, \ldots, b_\ell, s_\ell) = G(s_i)
+\end{cases}
+\]
+
+\[
+H_\ell(n) \equiv U_{\ell + m}
+\]
+
+\end{proof}
+
+\begin{lem}
+    $\forall i : H_i \approx_c H_{i+1}$.
+\end{lem}
+\begin{proof}
+    By reduction (as before):
+    \begin{center}
+        \includegraphics[scale=0.4]{img/Comp_sec/Reduction.png}
+    \end{center}
+    By the above observations:
+    $$\Pr[\mathcal{D}(z) = 1: z = G(s); s \in \{0,1\}^n] $$
+    $$= \Pr[\mathcal{D}'(b1,\dots,b_\ell,s_ell) = 1 : (b1,\dots,b_\ell,s_ell) \in H_i (n)]$$
+    $$ \Pr[\mathcal{D}(z) = 1 : z \leftarrow U_{n+1}] = \Pr[\mathcal{D}' (b1,\dots,b_\ell,s_ell) = 1 : (b1,\dots,b_\ell,s_ell) \in H_{n+1}(n)] \implies $$
+    $$ |\Pr[\mathcal{D}(z)=1 : z = G(U_n)] - \Pr[\mathcal{D}(z) = 1: z \in U_n+1]| \geq \frac{1}{p'(n)}.$$
+    $$\implies H_i \approx_c H_i + 1$$
+\end{proof}
 \end{document}
