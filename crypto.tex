@@ -385,7 +385,7 @@ An alternative way to think about it:
 \end{center}
 \begin{defn}[Pseudorandomness]
     Pseudorandomness is a sequence of bits that are not random, but look random. We capture this requirement using \textbf{Indistinguishability (computational)}.\\
-    We have already seen something like this in SD. Given X,Y RVs over some domain, SD(X,X') $\leq \epsilon$ is equivalent to: $\forall \mathcal{D}$ (adversary):
+    We have already seen something like this in SD. Given X,X' RVs over some domain, SD(X,X') $\leq \epsilon$ is equivalent to: $\forall \mathcal{D}$ (adversary):
     $$|Pr[\mathcal{D}(x)=1 : x \leftarrow X] - Pr[\mathcal{D}(y)=1 : y \leftarrow X']| \leq \epsilon$$ 
 \end{defn}
 \begin{center}
@@ -393,9 +393,9 @@ An alternative way to think about it:
 \end{center}
 \begin{defn}
     X ($X_n$),Y ($Y_n$) are computationally indistinguishable ($ X \approx_c Y$) if $\forall PPT \mathcal{D}$:
-    $$|Pr[\mathcal{D}(z)=1 : z \leftarrow X_n] - Pr[\mathcal{D}(z)=1 : y \leftarrow Y_n]| \leq \text{negl}(n)$$
+    $$|Pr[\mathcal{D}(z)=1 : z \leftarrow X_n] - Pr[\mathcal{D}(z)=1 : x' \leftarrow Y_n]| \leq \text{negl}(n)$$
 \end{defn}
-With this we cand efine pseudorandomness:
+With this we can define pseudorandomness:
 \begin{defn}[Pseudorandom Generator (PRG)]
     A function $G: \{0,1\}^n \rightarrow \{0,1\}^{n+l}$ with $l \geq 1$ (The Stretch) is secure if:
     $$G(U_n) \approx_c U_{n+l}$$
@@ -407,7 +407,7 @@ With this we cand efine pseudorandomness:
 \end{center}
 Let's understand how to build PRGs:
 \begin{itemize}
-    \item Use a randomness extracotr to get a uniform seed $s \in \{0,,1\}^n$.
+    \item Use a randomness extractor to get a uniform seed $s \in \{0,,1\}^n$.
     \item Define a simple PRG $G:\{0,1\}^n \rightarrow \{0,1\}^{n+1}$ with minimal stretch $l = 1$.
     \item Use G to stretch any $l(n) = poly(n)$.
 \end{itemize}
@@ -425,7 +425,7 @@ Theory vs Practice:
     \includegraphics[scale=0.4]{img/Comp_sec/BlueGen.png}
 \end{center}
 \begin{proof}
-    Assume $G^l$ not secure, $\exists$ PPT $\mathcal{D}^l$ that can distinguish $G^l(U_n)$ from $U_{n+l}$ from $U_{n+l}$ with probability $\geq \frac{1}{p(n)}$ for some polynomial. We want to buildt PPT $\mathcal{D}$ that can
+    Assume $G^l$ not secure, $\exists$ PPT $\mathcal{D}^l$ that can distinguish $G^l(U_n)$ from $U_{n+l}$ with probability $\geq \frac{1}{p(n)}$ for some polynomial. We want to buildt PPT $\mathcal{D}$ that can
     distinguish $G(U_n)$ from $U_{n+1}$ with probability $\frac{1}{p(n)}$. ($\mathcal{D}$ is called a reduction)
     \begin{center}
         \includegraphics[scale=0.4]{img/Comp_sec/Hybrid_arg_img.png}
