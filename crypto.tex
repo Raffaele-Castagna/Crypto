@@ -8,6 +8,9 @@
 \usepackage[bottom]{footmisc} % note appiccicate al fondo della pagina
 \usepackage{float} % per posizionamento immagini
 \usepackage{cancel}
+\usepackage{tikz}
+\usepackage{framed}
+\usepackage{amsfonts}
 
 \geometry{tmargin=.75in, bmargin=.75in, lmargin=.75in, rmargin = .75in}  
 
@@ -17,6 +20,11 @@
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\Q}{\mathbb{Q}}
 \newcommand{\M}{\mathbb{M}}
+\newcommand{\enc}{\mathcal{E}nc}
+\newcommand{\dec}{\mathcal{D}ec}
+\newcommand{\negl}{\text{negl}}
+\newcommand{\poly}{\text{poly}}
+\newcommand{\game}{\text{GAME}}
 \newcommand{\Cdot}{\boldsymbol{\cdot}}
 
 \newtheorem{thm}{Theorem}
@@ -470,4 +478,257 @@ H_\ell(n) \equiv U_{\ell + m}
     $$ |\Pr[\mathcal{D}(z)=1 : z = G(U_n)] - \Pr[\mathcal{D}(z) = 1: z \in U_n+1]| \geq \frac{1}{p'(n)}.$$
     $$\implies H_i \approx_c H_i + 1$$
 \end{proof}
+The next question is: How do we build G : $\{0,1\}^n \rightarrow \{0,1\}^{n+1}$?\\
+\begin{itemize}
+    \item Practical: Heuristic construction
+    \item Theoretical: From any OWF
+\end{itemize}
+So we need to build a PRG from a OWF. 
+To do so we need to introduce the concept of \textbf{Hardcore bits}. They are bits of info about x that are hard to compute given $y=f(x)$.
+It's a predicate $h(x)$ s.t. $h(x) \in \{0,1\}$ is \textbf{hard} to compute given $f(x)$ (w.p. better than $\frac{1}{2}$).\\
+First: Can there be a single h such that h is hardcore for all OWF?\\
+No, because suppose we fix any h; Take f for a OWF, consider:
+$$\hat{f}(x) = h(x) || f(x)$$.
+h is not hard-core for $\hat{f}$, but is $\hat{f}$ a OWF?\\
+\begin{center}
+    \includegraphics[scale=0.4]{img/Comp_sec/f_hat1.png}
+\end{center}
+$$\Pr[\hat{\mathcal{A}} \text{ wins }] \geq (\frac{1}{2} * \Pr[\hat{\mathcal{A}}(h(x) || y) \text{ wins }])$$
+$$\Pr[\hat{\mathcal{A}} \text{ wins }] = \Pr[\hat{\mathcal{A}}(b,y) \text{ wins } \wedge b = h(x)] + \Pr[\hat{\mathcal{A}}(b,y) \text{ wins } \wedge b \neq h(x)]$$
+$$ \geq \frac{1}{2} * \Pr[\hat{\mathcal{A}}(h(x),y) \text{ wins }]$$
+$$ \geq \frac{1}{2} * \frac{1}{\text{poly} \geq \frac{1}{\text{poly}}}$$
+
+Solution: swap the quantifiers.
+\begin{defn}
+    Let $f : \{0,1\}^n \rightarrow \{0,1\}^n$ be a OWF. Then h is hard-core for f if either of the following is true:
+    \begin{itemize}
+        \item $\forall \text{ PPT } \mathcal{P}\colon \Pr[\mathcal{P}(y) = h(x): \substack{x \leftarrow \{0,1\}^n // y = f(x)}] \leq \frac{1}{2}$
+        \item $(f(x),h(x)) \approx_c (f(x),b)$ for $b \leftarrow \{0,1\}$ and $x \leftarrow \{0,1\}^n$
+    \end{itemize}
+\end{defn}
+\begin{proof}
+We show that the following are equivalent for a predicate $h$ and a function $f$:
+\begin{enumerate}
+    \item For all PPT algorithms $\mathcal{P}$,
+    \[
+        \Pr\left[\mathcal{P}(y) = h(x) : x \leftarrow \{0,1\}^n,\, y = f(x)\right] \leq \frac{1}{2} + \text{negl}(n)
+    \]
+    \item $(f(x), h(x)) \approx_c (f(x), b)$, where $b \leftarrow \{0,1\}$ is uniform and $x \leftarrow \{0,1\}^n$.
+\end{enumerate}
+
+\textbf{(2) $\implies$ (1):} \\
+Suppose $(f(x), h(x)) \approx_c (f(x), b)$. Assume, for contradiction, that there exists a PPT $\mathcal{P}$ such that
+\[
+    \Pr[\mathcal{P}(f(x)) = h(x)] \geq \frac{1}{2} + \epsilon
+\]
+for some non-negligible $\epsilon$. Construct a distinguisher $\mathcal{D}$ that, given $(y, b')$, outputs $1$ if $\mathcal{P}(y) = b'$, else $0$. Then:
+\[
+    \left| \Pr[\mathcal{D}(f(x), h(x)) = 1] - \Pr[\mathcal{D}(f(x), b) = 1] \right| = \left| \Pr[\mathcal{P}(f(x)) = h(x)] - \Pr[\mathcal{P}(f(x)) = b] \right|
+\]
+But $\Pr[\mathcal{P}(f(x)) = b] = \frac{1}{2}$ since $b$ is uniform and independent. Thus, the advantage is at least $\epsilon$, contradicting computational indistinguishability.
+
+\end{proof}
+It also true that $1 \implies 2$.\\
+\begin{thm}
+    If one-way permutations exist (OWP), then there exist $f\colon\{0,1\}^n \rightarrow \{0,1\}^n$, then $\exists G\colon\{0,1\}^n \rightarrow\{0,1\}^{n+1}$ PRG.
+\end{thm}
+\begin{proof}
+    $$G(s) = f(s) || h(s) \text{ where h is hard-core for f.}$$
+    $$G(U_n) \equiv f(U_n) || h(U_n) \approx_c f(U_n) || U_1 \equiv U_{n+1}$$
+\end{proof}
+\begin{thm}
+    If OWF exist, then PRGs with $l(n) = 1$ exist.
+\end{thm}
+All that is left is to build h for every given f.\\
+\begin{thm}[Goldreich-Levin]
+    Let $f\colon\{0,1\}^n \rightarrow \{0,1\}^n$ be a OWF $g\colon\{0,1\}^{2n} \rightarrow \{0,1\}^{2n}$ with hardcore predicate:
+    $$h(x,r) = \oplus_{i=1}^{n}  x_i * r_i =\text{ } <\vec{x,r}>\mod 2$$
+\end{thm}
+\begin{proof}
+    Proof ideas: If $\exists \text{ PPT } \mathcal{P}$ for $h(x,r)$, then $\exists$ PPT $\mathcal{A}$ breaking g, in particular $\mathcal{A}$ can find x.\\
+    Simple cases:\\\\
+    Assume $\mathcal{P}$ is super good: $\forall x,r \Pr[\mathcal{P}(y) = h(x,r)] = 1$\\
+    Then $\mathcal{A}$ will just run $\mathcal{P}$ on 
+     \[
+\ y_1 = \left( f(x),\, \vec{e}_1 \right)
+\]
+\[
+\ y_2 = \left( f(x),\, \vec{e}_2 \right)
+\]
+\[
+\vec{e}_i = (0\,\cdots\,0\,1\,0\,\cdots) \quad \text{($1$ in position $i$, $0$ elsewhere)}
+\]
+Second idea: Assume $\mathcal{P}$ is very good: $\forall x \in \{0,1\}^n$:\\
+$$\Pr_{r \leftarrow \{0,1\}^n}[\mathcal{P}(f(x),r) = h(x,r)] \geq \frac{3}{4} + \frac{1}{\text{poly}}$$
+Run $\mathcal{P}$ on r random and $r \oplus e_i$.
+$$x_i = <x,r\oplus e_i> \oplus <x,r> = <x,e_i>$$
+Still you can amplify by taking majority of many queries.
+\end{proof}
+
+Recap from: $G$ is a Pseudorandom Generator (PRG) with stretch $l(\lambda) = \poly(\lambda)$.
+
+Today, we will apply what we have learned to Symmetric Key Encryption (SKE).
+
+Let us apply what we have learned to SKE, simple idea:
+\begin{itemize}
+    \item \textbf{Encryption}: $\enc(k, m) = G(k) \oplus m = c$
+    \item \textbf{Decryption}: $\dec(k, c) = G(k) \oplus c = m$
+\end{itemize}
+$k \in \{0,1\}^\lambda$, but $m \in \{0,1\}^{\lambda + l}$ for any l = poly.
+\hrulefill
+
+What does it mean for the above scheme to be computationally secure? Let's start with a warm-up definition.
+
+\begin{defn}[One-Time Computational Security for SKE]
+
+Let $\Pi = (\enc, \dec)$ be a Symmetric Key Encryption scheme. We say $\Pi$ is \textbf{one-time computationally secure} if:\\
+$$ \game_{\Pi, \mathcal{A}}^{1\text{-time}}(\lambda, 0) \approx_c \game_{\Pi, \mathcal{A}}^{1\text{-time}}(\lambda, 1) $$
+\begin{center}
+    \includegraphics[scale=0.4]{img/Comp_sec/example1.png}
+\end{center}
+Recall this means:
+$$|\Pr[b' = 1\colon \game_{\Pi, \mathcal{A}}^{1\text{-time}}(\lambda, 0)] - \Pr[b' = 1\colon \game_{\Pi, \mathcal{A}}^{1\text{-time}}(\lambda, 1)]| \leq \text{negl}(\lambda)$$
+\end{defn}
+Why is this definition good? Because it captures natural properties every SKE has:
+
+This definition captures several natural properties that a secure SKE should have:
+\begin{itemize}
+    \item It should be hard to compute the secret key.
+    \item It should be hard to compute the entire message.
+    \item It should be hard to compute even the first bit of the message.
+\end{itemize}
+
+
+On the negative side, this notion is strictly for a \textbf{one-time} scenario (i.e., one key, one message). If the same key is used to encrypt two different messages:
+\begin{align*}
+    c_1 &= G(k) \oplus m_1 \\
+    c_2 &= G(k) \oplus m_2
+\end{align*}
+Then an adversary can compute $c_1 \oplus c_2 = (G(k) \oplus m_1) \oplus (G(k) \oplus m_2) = m_1 \oplus m_2$. If the adversary knows $m_1$, they can easily recover $m_2$.
+
+
+\begin{thm}
+    If $G$ is a PRG, then the scheme $\Pi$ defined by $\enc(k,m) = G(k) \oplus m$ is one-time computationally secure.
+\end{thm}
+\begin{proof}
+    Starting with the initial experiment $\game(\lambda,b) \equiv \game_{\Pi, \mathcal{A}}^{1\text{-time}}(\lambda, b)$, we will introduce a hybrid experiment $\text{HYB}(\lambda, b)$ and show that:
+    \begin{center}
+        \includegraphics[scale=0.5]{img/Comp_sec/HYb.png}
+    \end{center}
+    Easy to see that $\text{HYB}(\lambda, 0) \equiv \text{HYB}(\lambda, 1)$ (perfect indistinguishability) because the distribution of $c$ is uniform and independant of b.\\
+    On the other hand: $\game(\lambda, b) \approx_c \text{HYB}(\lambda, b) \forall b \in \{0,1\}$ (computational indistinguishability). By reduction: assume $\exists PPT \mathcal{A}$ such that:\\
+    $$|\Pr[\game(\lambda,b = 1)] - \Pr[\text{HYB}(\lambda,b)= 1]| \geq \frac{1}{p(\lambda)}$$
+    Then build PPT $\mathcal{A}_prg$ against $G$:
+    \begin{center}
+        \includegraphics[scale=0.5]{img/Comp_sec/red2.png}
+    \end{center}
+    By inspection:\\
+    \[
+\Pr\left[ b' = 1 : z \leftarrow G(U_\lambda) \right] = \Pr\left[ b' = 1 : \game(\lambda, b) \right]
+\]
+\[
+\Pr\left[ b' = 1 : z \leftarrow U_{\lambda + l} \right] = \Pr\left[ b' = 1 : \text{HYB}(\lambda, b) \right]
+\]
+\[
+\implies \left| \Pr\left[ b' = 1 : z \leftarrow G(U_\lambda) \right] - \Pr\left[ b' = 1 : z \leftarrow U_{\lambda + l} \right] \right| \geq \frac{1}{p(\lambda)}
+\]
+
+\[
+\implies\ \game(\lambda, 0) \approx_c \text{HYB}(\lambda, 0)
+\]
+\[
+\equiv\ \text{HYB}(\lambda, 1)
+\]
+\[
+\approx_c\ \game(\lambda, 1)
+\]
+\[
+\implies\ \game(\lambda, 0) \approx_c \game(\lambda, 1)
+\]
+\end{proof}
+
+Our Next goal: Chosen-Plaintext Attack (CPA) Security.
+\begin{defn}
+    Let $\Pi = (\enc, \dec)$ be an SKE scheme. We say $\Pi$ is \textbf{CPA-secure} (secure against chosen-plaintext attacks) if for any PPT adversary $\mathcal{A}$:
+    $$ \game_{\Pi, \mathcal{A}}^{\text{CPA}}(\lambda, 0) \approx_c \game_{\Pi, \mathcal{A}}^{\text{CPA}}(\lambda, 1) $$
+
+\end{defn}
+\begin{center}
+    \includegraphics[scale=0.4]{img/Comp_sec/CPA.png}
+\end{center}
+
+
+\textbf{Observation}: No deterministic SKE can be CPA-secure. An adversary could query the oracle on $m_0^*$ to get $c_0$, then submit $(m_0^*, m_1^*)$ as the challenge. If the challenge ciphertext $c^*$ equals $c_0$, it knows $b=0$. Therefore, CPA-secure encryption must be randomized or stateful.
+
+The previous one-time scheme is not CPA-secure because it is deterministic. We need a new tool.
+\begin{defn}[Pseudorandom Function (PRF)]
+    
+\end{defn}
+A function family $\mathcal{F} = \{F_k : \{0,1\}^n \to \{0,1\}^m\}_{k \in \{0,1\}^\lambda}$ is a PRF if:
+$$\game_{mathcal{F},\mathcal{A}}^{\text{prf}}(\lambda,0) \approx_c \game_{mathcal{F},\mathcal{A}}^{\text{prf}}(\lambda,1)$$
+\begin{center}
+    \includegraphics[scale=0.4]{img/Comp_sec/prf.png}
+\end{center}
+Note: R is not efficiently computable as it takes exponential space to store it. $F(k,x)$ instead is efficiently computable for all k,x.\\
+Plan:
+\begin{enumerate}
+    \item Build a PRF.
+    \item Use it to get CPA secure SKE and more!
+\end{enumerate}
+How to build a PRF?
+\begin{enumerate}
+    \item Practice: many examples like DES, AES (more accurately, PRP, pseudorandom permutations, which are invertible PRFs).
+    \item Theory: The existence of OWF implies the existence of PRG, which in turn implies the existence of PRF.
+    $$OWF \implies PRG \implies PRF \implies PRP$$
+\end{enumerate}
+We cover our construction of PRFs.
+
+\begin{defn}[The Goldreich-Goldwasser-Micali (GGM) Construction]
+We will show one construction that proves PRGs imply PRFs:\\
+The GGM tree, bsacially, its a proof that $PRG \implies PRF$.
+Let $G: \{0,1\}^n \to \{0,1\}^{2n}$ be a PRG. We can split its output into two halves: $G(s) = (G_0(s), G_1(s))$, where $|G_0(s)| = |G_1(s)| = n$.
+
+
+In other words:
+$$ F_k(x_1x_2...x_n) = G_{x_n}(G_{x_{n-1}}(...G_{x_1}(k)...)) $$
+
+Think of $G$ as $F(k,x)$ for $x \in \{0,1\}$.
+\begin{center}
+\includegraphics[scale=0.4]{img/Comp_sec/PRF2.png}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[level distance=1.5cm,
+  level 1/.style={sibling distance=4cm},
+  level 2/.style={sibling distance=2cm}]
+  \node {$k$}
+    child {node {$G_0(k)$}
+      child {node {$G_0(G_0(k))$}}
+      child {node {$G_1(G_0(k))$} edge from parent node[right] {1}}
+      edge from parent node[left] {0}
+    }
+    child {node {$G_1(k)$}
+      child {node {$G_0(G_1(k))$}}
+      child {node {$G_1(G_1(k))$} edge from parent node[right] {1}}
+      edge from parent node[left] {0}
+      edge from parent node[right] {1}
+    };
+\end{tikzpicture}
+\end{center}
+In general:\\
+$$ F_k(x_1x_2...x_n) = G_{x_n}(G_{x_{n-1}}(...G_{x_1}(k)...)) $$
+\end{defn}
+\begin{thm}
+    If $G$ is a secure PRG, then the GGM construction $F$ is a secure PRF. $\mathcal{F} = \{ f_k \}$ is a PRF.
+\end{thm}
+The proof relies on a hybrid argument and the following lemmas.
+
+\begin{itemize}
+    \item \textbf{Lemma 1}: If $G: \{0,1\}^n \to \{0,1\}^{2n}$ is a PRG, then for any polynomial $t(\lambda)$, the following two ensembles are computationally indistinguishable:
+    $$ \{ (G(k_1), ..., G(k_t)) \} \approx_c \{ (U_{2n}, ..., U_{2n}) \}$$
+    $$ k_1, ... , k_t \leftarrow U_n $$
+    Next, given $F'_k \colon \{0,1\}^{n-1} \to \{0,1\}^n$ a PRF, then define:
+    $$ F_k(x,y) = G_x(F'_{k}(y)) \text{ with } x \in \{0,1\}, y \in \{0,1\}^{n-1} $$
+    \item \textbf{Lemma 2}: If $F'_k$ is a secure PRF, then $F_k$ is also a secure PRF.
+\end{itemize}
 \end{document}
