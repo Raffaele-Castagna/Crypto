@@ -473,8 +473,8 @@ H_\ell(n) \equiv U_{\ell + m}
     \end{center}
     By the above observations:
     $$\Pr[\mathcal{D}(z) = 1: z = G(s); s \in \{0,1\}^n] $$
-    $$= \Pr[\mathcal{D}'(b1,\dots,b_\ell,s_ell) = 1 : (b1,\dots,b_\ell,s_ell) \in H_i (n)]$$
-    $$ \Pr[\mathcal{D}(z) = 1 : z \leftarrow U_{n+1}] = \Pr[\mathcal{D}' (b1,\dots,b_\ell,s_ell) = 1 : (b1,\dots,b_\ell,s_ell) \in H_{n+1}(n)] \implies $$
+    $$= \Pr[\mathcal{D}'(b1,\dots,b_\ell,s_\ell) = 1 : (b1,\dots,b_\ell,s_\ell) \in H_i (n)]$$
+    $$ \Pr[\mathcal{D}(z) = 1 : z \leftarrow U_{n+1}] = \Pr[\mathcal{D}' (b1,\dots,b_\ell,s_\ell) = 1 : (b1,\dots,b_\ell,s_\ell) \in H_{n+1}(n)] \implies $$
     $$ |\Pr[\mathcal{D}(z)=1 : z = G(U_n)] - \Pr[\mathcal{D}(z) = 1: z \in U_n+1]| \geq \frac{1}{p'(n)}.$$
     $$\implies H_i \approx_c H_i + 1$$
 \end{proof}
@@ -496,13 +496,13 @@ h is not hard-core for $\hat{f}$, but is $\hat{f}$ a OWF?\\
 $$\Pr[\hat{\mathcal{A}} \text{ wins }] \geq (\frac{1}{2} * \Pr[\hat{\mathcal{A}}(h(x) || y) \text{ wins }])$$
 $$\Pr[\hat{\mathcal{A}} \text{ wins }] = \Pr[\hat{\mathcal{A}}(b,y) \text{ wins } \wedge b = h(x)] + \Pr[\hat{\mathcal{A}}(b,y) \text{ wins } \wedge b \neq h(x)]$$
 $$ \geq \frac{1}{2} * \Pr[\hat{\mathcal{A}}(h(x),y) \text{ wins }]$$
-$$ \geq \frac{1}{2} * \frac{1}{\text{poly} \geq \frac{1}{\text{poly}}}$$
+$$ \geq \frac{1}{2} * \frac{1}{\text{poly}}$$
 
 Solution: swap the quantifiers.
 \begin{defn}
     Let $f : \{0,1\}^n \rightarrow \{0,1\}^n$ be a OWF. Then h is hard-core for f if either of the following is true:
     \begin{itemize}
-        \item $\forall \text{ PPT } \mathcal{P}\colon \Pr[\mathcal{P}(y) = h(x): \substack{x \leftarrow \{0,1\}^n // y = f(x)}] \leq \frac{1}{2}$
+        \item $\forall \text{ PPT } \mathcal{P}\colon \Pr[\mathcal{P}(y) = h(x): \substack{x \leftarrow \{0,1\}^n \\ y = f(x)}] \leq \frac{1}{2}$
         \item $(f(x),h(x)) \approx_c (f(x),b)$ for $b \leftarrow \{0,1\}$ and $x \leftarrow \{0,1\}^n$
     \end{itemize}
 \end{defn}
@@ -564,7 +564,7 @@ Run $\mathcal{P}$ on r random and $r \oplus e_i$.
 $$x_i = <x,r\oplus e_i> \oplus <x,r> = <x,e_i>$$
 Still you can amplify by taking majority of many queries.
 \end{proof}
-
+\subsection{Symmetric Key Encryption}
 Recap from: $G$ is a Pseudorandom Generator (PRG) with stretch $l(\lambda) = \poly(\lambda)$.
 
 Today, we will apply what we have learned to Symmetric Key Encryption (SKE).
@@ -575,7 +575,6 @@ Let us apply what we have learned to SKE, simple idea:
     \item \textbf{Decryption}: $\dec(k, c) = G(k) \oplus c = m$
 \end{itemize}
 $k \in \{0,1\}^\lambda$, but $m \in \{0,1\}^{\lambda + l}$ for any l = poly.
-\hrulefill
 
 What does it mean for the above scheme to be computationally secure? Let's start with a warm-up definition.
 
@@ -618,9 +617,9 @@ Then an adversary can compute $c_1 \oplus c_2 = (G(k) \oplus m_1) \oplus (G(k) \
     Easy to see that $\text{HYB}(\lambda, 0) \equiv \text{HYB}(\lambda, 1)$ (perfect indistinguishability) because the distribution of $c$ is uniform and independant of b.\\
     On the other hand: $\game(\lambda, b) \approx_c \text{HYB}(\lambda, b) \forall b \in \{0,1\}$ (computational indistinguishability). By reduction: assume $\exists PPT \mathcal{A}$ such that:\\
     $$|\Pr[\game(\lambda,b = 1)] - \Pr[\text{HYB}(\lambda,b)= 1]| \geq \frac{1}{p(\lambda)}$$
-    Then build PPT $\mathcal{A}_prg$ against $G$:
+    Then build PPT $\mathcal{A}_{prg}$ against $G$:
     \begin{center}
-        \includegraphics[scale=0.5]{img/Comp_sec/red2.png}
+        \includegraphics[scale=0.4]{img/Comp_sec/red2.png}
     \end{center}
     By inspection:\\
     \[
@@ -664,8 +663,8 @@ The previous one-time scheme is not CPA-secure because it is deterministic. We n
 \begin{defn}[Pseudorandom Function (PRF)]
     
 \end{defn}
-A function family $\mathcal{F} = \{F_k : \{0,1\}^n \to \{0,1\}^m\}_{k \in \{0,1\}^\lambda}$ is a PRF if:
-$$\game_{mathcal{F},\mathcal{A}}^{\text{prf}}(\lambda,0) \approx_c \game_{mathcal{F},\mathcal{A}}^{\text{prf}}(\lambda,1)$$
+A function family $\mathcal{F} = \{F_k : \{0,1\}^n \to \{0,1\}^n\}_{k \in \{0,1\}^\lambda}$ is a PRF if:
+$$\game_{\mathcal{F},\mathcal{A}}^{\text{prf}}(\lambda,0) \approx_c \game_{\mathcal{F},\mathcal{A}}^{\text{prf}}(\lambda,1)$$
 \begin{center}
     \includegraphics[scale=0.4]{img/Comp_sec/prf.png}
 \end{center}
@@ -685,7 +684,7 @@ We cover our construction of PRFs.
 
 \begin{defn}[The Goldreich-Goldwasser-Micali (GGM) Construction]
 We will show one construction that proves PRGs imply PRFs:\\
-The GGM tree, bsacially, its a proof that $PRG \implies PRF$.
+The GGM tree, basically, its a proof that $PRG \implies PRF$.
 Let $G: \{0,1\}^n \to \{0,1\}^{2n}$ be a PRG. We can split its output into two halves: $G(s) = (G_0(s), G_1(s))$, where $|G_0(s)| = |G_1(s)| = n$.
 
 
@@ -710,7 +709,6 @@ Think of $G$ as $F(k,x)$ for $x \in \{0,1\}$.
     child {node {$G_1(k)$}
       child {node {$G_0(G_1(k))$}}
       child {node {$G_1(G_1(k))$} edge from parent node[right] {1}}
-      edge from parent node[left] {0}
       edge from parent node[right] {1}
     };
 \end{tikzpicture}
@@ -731,4 +729,230 @@ The proof relies on a hybrid argument and the following lemmas.
     $$ F_k(x,y) = G_x(F'_{k}(y)) \text{ with } x \in \{0,1\}, y \in \{0,1\}^{n-1} $$
     \item \textbf{Lemma 2}: If $F'_k$ is a secure PRF, then $F_k$ is also a secure PRF.
 \end{itemize}
+Recall the GGM (Goldreich-Goldwasser-Micali) construction: 
+$$ G:\{0,1\}^{\lambda}\rightarrow\{0,1\}^{2\lambda} $$ 
+$$ G(k)=(G_{0}(k),G_{1}(k)) $$ 
+
+We build $\mathcal{F}=\{F_{k}:\{0,1\}^{n(\lambda)}\rightarrow\{0,1\}^{\lambda}\}$ with $k \in \{0,1\}^{\lambda}$ such that 
+$$ F_{k}(x)=G_{x_{n}}(G_{x_{n-1}}(...G_{x_{1}}(k)...)) $$ 
+where $x = x_1x_2...x_n \in \{0,1\}^n$.
+
+\subsection*{Proof of Security (by Induction)}
+
+For the proof, let $n(\lambda) = \poly(\lambda)$. We use induction on $n$. 
+
+Let $F_{k}^{'}:\{0,1\}^{n-1}\rightarrow\{0,1\}^{\lambda}$ be the GGM construction for inputs of length $n-1$. 
+We can write $F_k$ for $n$-bit inputs as:
+$$ F_{k}(x,y)=G_{x}(F_{k}^{'}(y)) $$ 
+where $x\in\{0,1\}$ and $y\in\{0,1\}^{n-1}$. 
+
+\begin{lem} 
+If $\{F_{k}^{'}\}$ (GGM on $n-1$ inputs) is a PRF, then $\{F_k\}$ (GGM on $n$ inputs) is also a PRF family. 
+\end{lem}
+
+We can use this lemma to prove the security of GGM by induction. 
+
+\subsubsection*{Base Case ($n=1$)} 
+For $n=1$, the GGM construction is: 
+$$ F_{k}(x)=G_{x}(k), \quad x \in \{0,1\} $$ 
+This is:
+$$ F_k(x) = \begin{cases} G_0(k) & \text{if } x=0 \\ G_1(k) & \text{if } x=1 \end{cases} $$ 
+This is a PRF because $G$ is a PRG, so $(G_{0}(k),G_{1}(k))\approx_{c}U_{2\lambda}$. An adversary querying $F_k(0)$ and $F_k(1)$ just gets the output of the PRG, which is indistinguishable from two random $\lambda$-bit strings $R(0)$ and $R(1)$.
+
+\subsubsection*{Inductive Step}
+Assume $\{F_{k}^{'}\}$ (GGM on $n-1$ inputs) is a PRF. We want to prove $\{F_k\}$ (GGM on $n$ inputs) is a PRF. This is exactly what the Lemma states. 
+
+\begin{proof}[Proof (of Lemma)] 
+We use a hybrid argument. Let $\mathcal{A}$ be a PPT adversary.
+
+\begin{itemize}
+    \item \textbf{HYB 0}: The real world. 
+    $$ z = F_{k}(x,y) = G_{x}(F_{k}^{'}(y)) $$ 
+    where $k \leftarrow U_{\lambda}$. 
+    
+    \item \textbf{HYB 1}: 
+    $$ z = G_{x}(R^{'}(y)) $$ 
+    where $R^{'}: \leftarrow \mathcal{R}(\lambda,n-1 \rightarrow \lambda)$ is a truly random function from.
+    
+    \item \textbf{HYB 2}: The ideal world. 
+    $$ z = R(x,y) $$ 
+    where $R: \leftarrow \mathcal{R}(\lambda,n \rightarrow \lambda)$ is a truly random function.
+\end{itemize}
+
+\paragraph{Step 1: $HYB_0 \approx_c HYB_1$} 
+We show $HYB_{0}(\lambda)\approx_{c}HYB_{1}(\lambda)$ by reduction. 
+Assume a PPT $\mathcal{A}_{01}$ distinguishes $HYB_0$ and $HYB_1$ with non-negligible probability. 
+We build a reduction $\mathcal{A}_{prf}$ that breaks the PRF security of $\{F_{k}^{'}\}$. 
+\begin{center}
+    \includegraphics[scale=0.4]{img/Comp_sec/Aprf.png}
+\end{center}
+If z = $F_{k}^{'}(y)$, then $G_{x}(z)$ is identical to what $\mathcal{A}_{prf}$ receives in $HYB_0$. On the other hand, if z = $R^{'}(y)$, then $G_{x}(z)$ is identical to what $\mathcal{A}_{prf}$ receives in $HYB_1$.\\
+\paragraph{Step 2: $HYB_1 \approx_c HYB_2$} 
+Here, we use the property that $G$ is a PRG. 
+
+\begin{lem}[PRG Expansion]
+If $G:\{0,1\}^{\lambda}\rightarrow\{0,1\}^{2\lambda}$ is a PRG, then for any $t = \poly(\lambda)$: 
+$$ (G(k_{1}),\dots,G(k_{t})) \approx_{c} (U_{2\lambda},\dots,U_{2\lambda}) \equiv U_{2\lambda \cdot t} $$ 
+where $k_{1},\dots,k_{t} \leftarrow U_{\lambda}$ are chosen independently. 
+\end{lem}
+
+Now, assume a PPT $\mathcal{A}_{12}$ distinguishes $HYB_1$ and $HYB_2$. We build a PPT $\mathcal{A}_{prg}$:breaking the above claim.
+\begin{center}
+    \includegraphics[scale=0.4]{img/Comp_sec/claim.png}
+\end{center}
+Let $t(\lambda) = q(\lambda)$ - the number of queries made by $\mathcal{A}_{12}$. Each of $z_i \in \{0,1\}^{2\lambda}$ and we can think of it as:
+$$ z_i = (z_{i}^0, z_{i}^1) $$
+With each corresponding to $\lambda$ bits.\\
+
+In the above reduction, $i(y)$ is the index of the sample $z_i$ that was used when $\mathcal{A}_{12}$ asked already for x,y. If it never asked use the next available $z_i$.
+
+\end{proof}
+
+In the next few lectures, we'll see PRFs are enough to do practical symmetric crypto: 
+\begin{itemize}
+    \item CPA-Secure SKE (Symmetric Key Encryption) for messages of variable length (VIL). 
+    \item MACs (Message Authentication Codes) for messages of VIL. 
+    \item Non-malleable SKE (a.k.a. CCA-Secure SKE), which is equivalent to combining message privacy and message authentication. 
+\end{itemize}
+
+It will be important that our PRF $F$ is a \textbf{PRP (Pseudorandom Permutation)}, namely it is an efficient, length-preserving permutation for a given key. 
+In practice, we call it a \textbf{BLOCKCIPHER}. We will show that $PRPs \approx PRFs$. 
+This will also explain the real-world design of some blockciphers (e.g., DES, AES). 
+
+\section*{CPA-Secure SKE for Variable Length Messages}
+Let's start with encryption (CPA-security). 
+Recall the CPA indistinguishability game ($\game^{CPA}$): 
+The adversary $\mathcal{A}$ submits two messages $m_0, m_1$ of the same length ($|m_0| = |m_1|$) to a challenger. The challenger picks $k \leftarrow \mathcal{K}$, computes $c \leftarrow \enc(k, m_b)$ for a random bit $b$, and sends $c$ to $\mathcal{A}$. $\mathcal{A}$ wins if it guesses $b$.
+We need this to work for messages of any polynomial length (VIL). 
+
+\subsection*{Mode of Operation} 
+A mode of operation is a standardized way to encrypt messages $m = (m_1, \dots, m_d)$, where $m_i \in \{0,1\}^n$, using a PRF $\mathcal{F} = \{F_k: \{0,1\}^n \rightarrow \{0,1\}^n\}$. 
+
+\begin{rem}
+We can't just use $c = (F_k(m_1), \dots, F_k(m_d))$. This is Electronic Codebook (ECB) mode, and it's not secure (it leaks equalities between blocks). This is true even if $F$ is a PRP. 
+\end{rem}
+
+\subsubsection*{CBC (Cipher Block Chaining) Mode} 
+\begin{itemize}
+    \item $c_0 = IV \in U_n$ (Initialization Vector) 
+    \item $c_i = F_k(c_{i-1} \oplus m_i)$ for $i=1, \dots, d$ 
+    \item Output: $c = (c_0, c_1, \dots, c_d)$ 
+\end{itemize}
+\begin{center}
+    \includegraphics[scale=0.4]{img/Symmetric/CBC.png}
+\end{center}
+Decryption requires $F_k^{-1}$, so $F$ must be a PRP. Encryption is sequential. 
+\begin{thm}
+If $F$ is a PRP, then CBC-Mode is CPA-secure for VIL. 
+\end{thm}
+
+\subsubsection*{OFB (Output Feedback) Mode} 
+\begin{itemize}
+    \item $c_0 = r \in U_n$ 
+    \item $k_0 = r$
+    \item $k_i = F_k(k_{i-1})$ for $i=1, \dots, d$ 
+    \item $c_i = k_i \oplus m_i$ for $i=1, \dots, d$ 
+    \item Output: $c = (c_0, c_1, \dots, c_d)$
+\end{itemize}
+\begin{center}
+    \includegraphics[scale=0.4]{img/Symmetric/OFB.png}
+\end{center}
+
+\subsubsection*{CTR (Counter) Mode} 
+\begin{itemize}
+    \item $c_0 = r \in U_n$ (where $r$ is a counter) 
+    \item $c_i = F_k(r+i-1) \oplus m_i$ for $i=1, \dots, d$ 
+    \item Output: $c = (c_0, c_1, \dots, c_d)$
+    \item Note: "$+$" can be modulo $2^n$ arithmetic. 
+\end{itemize}
+\begin{center}
+    \includegraphics[scale=0.4]{img/Symmetric/CTR.png}
+\end{center}
+
+\begin{thm}
+Assuming $F$ is a PRF, CTR mode is a CPA-secure SKE for VIL. 
+\end{thm}
+\begin{proof}
+We use a hybrid argument.
+Let $G(\lambda, b) \equiv \game_{\Pi}^{cpa}(\lambda, b)$ be the CPA game where $\Pi$ is CTR mode using $\mathcal{F}$. We want to show $G(\lambda, 0) \approx_c G(\lambda, 1)$. 
+Recall that in $G(\lambda,0)$:\\
+Upon input an encryption query $m = (m_1, \dots, m_d)$, we return $c = (c_1, \dots, c_d)$ such that $c_0 = r \in U_n$ and $c_i = F_k(r+i-1) \oplus m_i$.\\
+For the challenge $m_b^* = (m_{b,1}^*, \dots, m_{b,d^*}^*) (d^* \in \N is the dimension)$, we return $c^* = (c_0^*, \dots, c_{d^*}^*)$ such that $c_0^* = r^* \in U_n$ and $c_i^* = F_k(r^*+i-1) \oplus m_{b,i}^*$.\\
+\begin{itemize}
+    \item \textbf{Game $G(\lambda, b)$}: Real game.
+    \begin{itemize}
+        \item Encryption query $m=(m_1, \dots, m_d)$: return $c=(c_0, \dots, c_d)$ where $c_0 = r \in U_n$ and $c_i = F_k(r+i-1) \oplus m_i$. 
+        \item Challenge query $m_b^*$: return $c^*=(c_0^*, \dots, c_{d^*}^*)$ where $c_0^* = r^* \in U_n$ and $c_i^* = F_k(r^*+i-1) \oplus m_{b,i}^*$. 
+    \end{itemize}
+    \item \textbf{Hybrid $H_1(\lambda, b)$}: Same as $G(\lambda, b)$, but replace $F_k(\cdot)$ with a truly random function $R(\cdot)$. 
+    \item \textbf{Hybrid $H_2(\lambda)$}: The challenge ciphertext $c^*$ is uniform and independent of $b$. (i.e., $c_0^* = r^*$ and $c_i^* = u_i \oplus m_{b,i}^*$ where $u_i$ are fresh uniform strings. This is equivalent to $c^*$ being $c_0^*$ and $d^*$ fresh uniform strings, which is independent of $b$.)
+\end{itemize}
+
+\begin{lem}
+$G(\lambda, b) \approx_c H_1(\lambda, b)$ for all $b \in \{0,1\}$.
+\end{lem}
+\begin{proof}
+Standard reduction. Fix $b$. Assume a PPT $\mathcal{A}$ distinguishes $G(\lambda, b)$ and $H_1(\lambda, b)$. We build a PPT adversary $\mathcal{A}_prf$ against the PRF $F$.
+\begin{center}
+    \includegraphics[scale=0.4]{img/Symmetric/lem1proof.png}
+\end{center}
+\end{proof}
+
+\begin{lem}
+$H_1(\lambda, b) \approx_c H_2(\lambda)$, as long as the number of encryption queries $q(\lambda) = \poly(\lambda)$. 
+\end{lem}
+\begin{proof}
+In $H_1(\lambda, b)$, the challenge ciphertext is created using the values $R(r^*), R(r^*+1), \dots, R(r^*+d^*-1)$. An encryption query $j$ uses values $R(r_j), R(r_j+1), \dots, R(r_j+d_j-1)$. 
+
+Let \textbf{BAD} be the event that any counter value used for the challenge overlaps with any counter value used for any encryption query. 
+$$ \text{BAD} = \exists j, i, i' \text{ s.t. } r^*+i' = r_j+i $$ 
+($i' \in [0, d^*-1]$, $i \in [0, d_j-1]$)
+
+Conditioned on $\neg \text{BAD}$, all values $r^*+i'$ are "fresh" inputs to the random function $R$. This means all outputs $R(r^*+i')$ are independent and uniformly random. In this case, $c_i^* = R(r^*+i-1) \oplus m_{b,i}^*$ is a one-time pad encryption, and the ciphertext $c^*$ is uniform and independent of $b$. This is exactly $H_2(\lambda)$. 
+
+By the properties of statistical distance:
+$$ SD(H_1(\lambda, b); H_2(\lambda)) \le \Pr[\text{BAD}] $$ 
+
+We just need to bound $\Pr[\text{BAD}]$. Let $q = q(\lambda)$ be the number of queries.
+Let $\text{BAD}_j$ be the event that the challenge overlaps with query $j$. 
+$\Pr[\text{BAD}] = \Pr[\cup_{j=1}^q \text{BAD}_j] \le \sum_{j=1}^q \Pr[\text{BAD}_j]$ (by Union Bound). 
+
+Let's bound $\Pr[\text{BAD}_j]$. WLOG, assume all message lengths are at most $q$. 
+Overlap $\text{BAD}_j$ occurs if $\{r^*, \dots, r^*+q-1\}$ overlaps with $\{r_j, \dots, r_j+q-1\}$. 
+$r^*$ and $r_j$ are chosen uniformly from $\{0, \dots, 2^n-1\}$.
+Overlap happens if $r_j \in [r^*-q+1, r^*+q-1]$. 
+The size of this interval is $(r^*+q-1) - (r^*-q+1) + 1 = 2q-1$.
+So, $\Pr[\text{BAD}_j] = \frac{2q-1}{2^n}$. 
+
+$$ \Pr[\text{BAD}] \le \sum_{j=1}^q \frac{2q-1}{2^n} = q \cdot \frac{2q-1}{2^n} \le \frac{2q^2}{2^n} = \negl(\lambda) $$ 
+Since $q = \poly(\lambda)$ and $n$ (the block size) is related to $\lambda$ (e.g., $n=\lambda$), $2^n$ is exponential in $\lambda$.
+\end{proof}
+
+\textbf{Conclusion}:
+$G(\lambda, 0) \approx_c H_1(\lambda, 0) \approx_c H_2(\lambda) \approx_c H_1(\lambda, 1) \approx_c G(\lambda, 1)$. 
+The advantages $G(\lambda, 0) \approx_c H_1(\lambda, 0)$ and $H_1(\lambda, 1) \approx_c G(\lambda, 1)$ are negligible by Lemma 1.
+The advantages $H_1(\lambda, 0) \approx_c H_2(\lambda)$ and $H_2(\lambda) \approx_c H_1(\lambda, 1)$ are negligible by Lemma 2.
+Thus, $G(\lambda, 0) \approx_c G(\lambda, 1)$ by the triangle inequality, and CTR mode is CPA-secure. 
+\end{proof}
+
+\subsection{Message Authentication Codes (MACs)}
+
+We now switch to the problem of message authentication. 
+We need a security guarantee that it is computationally hard to forge a message/tag pair $(m^*, \tau^*)$ such that $\text{Vrfy}(k, m^*) = \text{accept}$ (or $\text{Tag}(k, m^*) = \tau^*$) without knowing the secret key $k$. 
+
+\begin{defn}[UF-CMA]
+We say a MAC scheme $\Pi = (\text{Gen}, \text{Tag}, \text{Vrfy})$ is \textbf{Unforgeable Under a Chosen-Message Attack (UF-CMA)} if for all PPT adversaries $\mathcal{A}$, $\Pr[\game_{\Pi, \mathcal{A}}^{ufcma}(\lambda) = 1] \le \negl(\lambda)$. 
+
+The game $\game_{\Pi, \mathcal{A}}^{ufcma}(\lambda)$ proceeds as follows: 
+\begin{enumerate}
+    \item $k \leftarrow \text{Gen}(\lambda)$ 
+    \item $\mathcal{A}$ gets oracle access to $\text{Tag}(k, \cdot)$. $\mathcal{A}$ makes queries $m_1, \dots, m_q$ and receives $\tau_i = \text{Tag}(k, m_i)$. 
+    \item $\mathcal{A}$ outputs a pair $(m^*, \tau^*)$. 
+    \item $\mathcal{A}$ wins if $\text{Vrfy}(k, m^*) = \text{accept}$ (i.e., $\text{Tag}(k, m^*) = \tau^*$) AND $m^* \notin \{m_1, \dots, m_q\}$. 
+\end{enumerate}
+\end{defn}
+
+\begin{thm}
+If $\mathcal{F} = \{F_k\}$ is a PRF, then the MAC scheme $\text{Tag}(k, m) = F_k(m)$ is UF-CMA for fixed-length messages. 
+\end{thm}
 \end{document}
