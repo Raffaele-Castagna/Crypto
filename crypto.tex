@@ -955,4 +955,417 @@ The game $\game_{\Pi, \mathcal{A}}^{ufcma}(\lambda)$ proceeds as follows:
 \begin{thm}
 If $\mathcal{F} = \{F_k\}$ is a PRF, then the MAC scheme $\text{Tag}(k, m) = F_k(m)$ is UF-CMA for fixed-length messages. 
 \end{thm}
+\begin{proof}
+[Proof of Theorem 14]
+We prove this by a standard reduction to the security of the PRF $\mathcal{F}$. We will show that if there exists a PPT adversary $\mathcal{A}$ that can win the UF-CMA game with non-negligible probability $\epsilon(\lambda)$, then we can build a PPT distinguisher $\mathcal{D}$ that can break the PRF security of $\mathcal{F}$ with the same non-negligible advantage.
+
+Recall the PRF security game [cite: 626]: The distinguisher $\mathcal{D}$ is given an oracle $\mathcal{O}$, which is either the real PRF $F_k(\cdot)$ (for a random $k$) [cite: 639] or a truly random function $R(\cdot)$[cite: 640]. $\mathcal{D}$ must output a bit $b'$ guessing which oracle it has. Its advantage is $|Pr[\mathcal{D} \text{ wins} | \mathcal{O}=F_k] - Pr[\mathcal{D} \text{ wins} | \mathcal{O}=R]|$.
+
+Our distinguisher $\mathcal{D}$ will work as follows, using $\mathcal{A}$ as a subroutine:
+
+\begin{enumerate}
+    \item $\mathcal{D}$ receives its oracle $\mathcal{O}$ (which is either $F_k$ or $R$).
+    \item $\mathcal{D}$ runs the adversary $\mathcal{A}$.
+    \item When $\mathcal{A}$ makes a MAC query for a message $m_i$[cite: 865], $\mathcal{D}$ queries its own oracle $\mathcal{O}$ to get $\tau_i = \mathcal{O}(m_i)$. $\mathcal{D}$ then returns $\tau_i$ to $\mathcal{A}$.
+    \item $\mathcal{A}$ makes $q = poly(\lambda)$ such queries.
+    \item Eventually, $\mathcal{A}$ outputs its forgery attempt $(m^*, \tau^*)$[cite: 866]. By the game rules, $m^* \notin \{m_1, \dots, m_q\}$[cite: 867].
+    \item $\mathcal{D}$ must now output its guess. $\mathcal{D}$ queries its oracle $\mathcal{O}$ on $m^*$ to get the "correct" tag $\tau'_{*} = \mathcal{O}(m^*)$.
+    \item \textbf{If} $\tau^* = \tau'_{*}$ (meaning $\mathcal{A}$'s forgery was successful), $\mathcal{D}$ outputs $1$ (guessing it has the real PRF).
+    \item \textbf{Else} (if the forgery failed), $\mathcal{D}$ outputs $0$ (guessing it has the random function).
+\end{enumerate}
+
+\textbf{Explanation of the Reduction:} We are trying to see if $\mathcal{A}$'s success rate changes depending on the oracle $\mathcal{D}$ is given.
+
+\begin{itemize}
+    \item \textbf{Case 1: $\mathcal{D}$ has the random function $R(\cdot)$ (Game 1 / H(1) [cite: 9]).}
+    In this case, $\mathcal{A}$ is interacting with a truly random function. It queries $m_1, \dots, m_q$ and receives $q$ random values $\tau_1, \dots, \tau_q$. It then outputs $(m^*, \tau^*)$ for a *new* message $m^*$.
+    Since $m^*$ has never been queried before, $R(m^*)$ is a fresh, uniformly random value from $\{0,1\}^n$, completely independent of all previous queries.
+    The probability that $\mathcal{A}$'s guess $\tau^*$ is equal to this random value is exactly $1 / 2^n$.
+    Therefore, $Pr[\mathcal{D} \text{ outputs } 1 | \mathcal{O}=R] = Pr[\mathcal{A} \text{ wins} | \text{Ideal}] \le \frac{1}{2^n} = negl(\lambda)$.
+
+    \item \textbf{Case 2: $\mathcal{D}$ has the real PRF $F_k(\cdot)$ (Game 0 / G(0) [cite: 5]).}
+    In this case, $\mathcal{A}$ is interacting with the real MAC. The probability that $\mathcal{D}$ outputs 1 is exactly the probability that $\mathcal{A}$ wins the real UF-CMA game.
+    $Pr[\mathcal{D} \text{ outputs } 1 | \mathcal{O}=F_k] = Pr[\mathcal{A} \text{ wins} | \text{Real}]$.
+    By assumption, $\mathcal{A}$ wins with non-negligible probability $\epsilon(\lambda)$.
+    So, $Pr[\mathcal{D} \text{ outputs } 1 | \mathcal{O}=F_k] = \epsilon(\lambda)$.
+\end{itemize}
+
+\textbf{Conclusion:}
+The advantage of our distinguisher $\mathcal{D}$ is:
+$$ |Pr[\mathcal{D} \text{ outputs } 1 | \mathcal{O}=F_k] - Pr[\mathcal{D} \text{ outputs } 1 | \mathcal{O}=R]| $$
+$$ = |\epsilon(\lambda) - negl(\lambda)| $$
+This advantage is non-negligible. This contradicts the assumption that $\mathcal{F}$ is a secure PRF. Therefore, no such adversary $\mathcal{A}$ can exist, and the MAC is UF-CMA secure.
+\end{proof}
+
+\section{Extending MACs to Longer Messages} [cite: 18]
+The previous theorem proves security for fixed-length messages, where the message length is the input length of the PRF. But what about variable-length or long messages? [cite: 19]
+
+\subsection{Warm-up: Insecure Constructions} [cite: 21]
+Let's analyze a few simple (and bad) ideas for extending a fixed-length MAC $Tag(k, \cdot) = F_k(\cdot)$ to handle a long message $m = (m_1, m_2, \dots, m_d)$.
+
+\subsubsection{Construction 1: Block-by-Block MAC}
+Define $Tag(k, m) = (\tau_1, \dots, \tau_d)$ where $\tau_i = F_k(m_i)$[cite: 23].
+\begin{itemize}
+    \item \textbf{Attack (Splicing / Mix-and-Match):} [cite: 24-25] This construction is not secure. An attacker can perform a "mix-and-match" attack.
+    \begin{enumerate}
+        \item Attacker queries for the tag on $m = (m_1, m_2)$[cite: 26]. It receives $\tau = (\tau_1, \tau_2)$.
+        \item Attacker queries for the tag on $m' = (m_3, m_4)$[cite: 31]. It receives $\tau' = (\tau_3, \tau_4)$.
+        \item Attacker can now forge the tag for a new message $m_{new} = (m_1, m_4)$. The forged tag is $\tau_{new} = (\tau_1, \tau_4)$[cite: 31]. This is a valid tag for a message the attacker never queried.
+    \end{enumerate}
+\end{itemize}
+
+\subsubsection{Construction 2: Simple XOR Sum}
+Define $Tag(k, m) = \bigoplus_{i=1}^d F_k(m_i)$[cite: 32].
+\begin{itemize}
+    \item \textbf{Attack (Reordering / Forgery):} [cite: 37] This is also insecure.
+    \begin{enumerate}
+        \item Attacker queries for the tag on a one-block message $m = (m_1)$. It receives $\tau = F_k(m_1)$.
+        \item Attacker can now forge the tag for the two-block message $m^* = (m_1, m_1)$[cite: 45].
+        \item The valid tag would be $\tau^* = F_k(m_1) \oplus F_k(m_1) = 0$.
+        \item The attacker outputs $(m^*, 0)$. This is a valid forgery for a new message.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{A Secure Construction: Hash-then-MAC}
+The secure idea is to first hash the long message $m$ into a short, fixed-length string, and then apply our secure fixed-length MAC to that string[cite: 51].
+
+Let $\mathcal{H} = \{h_s: \{0,1\}^nd \rightarrow \{0,1\}^n\}_{s \in \{0,1\}^\lambda}$ be a family of hash functions, where $s$ is a key for the hash function.
+Let $\mathcal{F} = \{F_k: \{0,1\}^n \rightarrow \{0,1\}^n\}_{k \in \mathcal{K}}$ be a PRF.
+
+The Hash-then-MAC construction is:
+$$ Tag_{(k,s)}(m) = F_k(h_s(m)) $$ [cite: 51]
+The full key is the pair $(k, s)$.
+
+\textbf{What property do we need from $\mathcal{H}$?} [cite: 51]
+If an attacker can find $m \neq m'$ such that $h_s(m) = h_s(m')$ (a collision) [cite: 54-55], they can break the MAC. They would ask for the tag $\tau = Tag(m) = F_k(h_s(m))$. They would then know that $\tau$ is also the tag for $m'$, a message they never queried.
+
+So, we need $\mathcal{H}$ to be **Collision-Resistant**[cite: 56]. However, this is a strong requirement and can be computationally expensive. We can get away with a weaker, statistical property.
+
+\begin{defn}[$\epsilon$-Almost Universal (AU) Hash Family] [cite: 57-58]
+A family of hash functions $\mathcal{H} = \{h_s: \mathcal{M} \rightarrow \mathcal{T}\}_{s \in \mathcal{S}}$ is \textbf{$\epsilon$-Almost Universal} if for all distinct messages $m, m' \in \mathcal{M}$ (with $m \neq m'$)[cite: 59], we have:
+$$ Pr_{s \leftarrow \mathcal{S}} [ h_s(m) = h_s(m') ] \le \epsilon $$ [cite: 60-61]
+If $\epsilon = 1/|\mathcal{T}|$ (e.g., $2^{-n}$) [cite: 62], the family is called \textbf{Perfectly Universal}[cite: 65]. We only require $\epsilon$ to be a negligible function, $\epsilon = negl(\lambda)$[cite: 67].
+\end{defn}
+
+\begin{thm}
+If $\mathcal{F}$ is a secure PRF and $\mathcal{H}$ is an $\epsilon$-AU hash family (with $\epsilon = negl(\lambda)$), then the Hash-then-MAC construction $Tag_{(k,s)}(m) = F_k(h_s(m))$ is a UF-CMA secure MAC. [cite: 71]
+\end{thm}
+
+\begin{proof}
+We use a hybrid argument to prove this. Let $\mathcal{A}$ be a PPT adversary making $q$ queries.
+\begin{itemize}
+    \item \textbf{Game 0 ($H_0$):} The real game[cite: 76]. The challenger picks random $k \in \mathcal{K}$ and $s \in \mathcal{S}$. $\mathcal{A}$ interacts with an oracle $\mathcal{O}(m) = F_k(h_s(m))$.
+    \item \textbf{Game 1 ($H_1$):} The "Hashed Random Function" game[cite: 78]. The challenger picks a random $s \in \mathcal{S}$ and a truly random function $R: \{0,1\}^n \rightarrow \{0,1\}^n$. $\mathcal{A}$ interacts with $\mathcal{O}(m) = R(h_s(m))$.
+    \item \textbf{Game 2 ($H_2$):} The "Ideal MAC" game[cite: 81]. The challenger picks a truly random function $R': \{0,1\}^* \rightarrow \{0,1\}^n$. $\mathcal{A}$ interacts with $\mathcal{O}(m) = R'(m)$.
+\end{itemize}
+We will show that $Pr[\mathcal{A} \text{ wins in } H_0] \approx Pr[\mathcal{A} \text{ wins in } H_1] \approx Pr[\mathcal{A} \text{ wins in } H_2]$, and that $Pr[\mathcal{A} \text{ wins in } H_2]$ is negligible.
+
+\textbf{Step 1: $H_0 \approx_c H_1$} [cite: 82]
+This step relies on the security of the PRF $\mathcal{F}$. We can build a distinguisher $\mathcal{D}$ for the PRF game:
+\begin{enumerate}
+    \item $\mathcal{D}$ receives its oracle $\mathcal{O}'$ (which is either $F_k$ or $R$).
+    \item $\mathcal{D}$ simulates $H_0$ or $H_1$ for $\mathcal{A}$. It picks a hash key $s \in \mathcal{S}$ itself.
+    \item When $\mathcal{A}$ queries $m_i$, $\mathcal{D}$ computes the digest $d_i = h_s(m_i)$.
+    \item $\mathcal{D}$ queries its own oracle $\mathcal{O}'$ to get $\tau_i = \mathcal{O}'(d_i)$ and returns $\tau_i$ to $\mathcal{A}$.
+    \item When $\mathcal{A}$ outputs a forgery $(m^*, \tau^*)$, $\mathcal{D}$ computes $d^* = h_s(m^*)$ and checks if $\mathcal{O}'(d^*) = \tau^*$ and $m^*$ is new.
+    \item If $\mathcal{A}$ wins, $\mathcal{D}$ outputs 1, else 0.
+\end{enumerate}
+From $\mathcal{A}$'s perspective, this simulation is perfect.
+$Pr[\mathcal{D} \text{ outputs } 1 | \mathcal{O}'=F_k] = Pr[\mathcal{A} \text{ wins in } H_0]$.
+$Pr[\mathcal{D} \text{ outputs } 1 | \mathcal{O}'=R] = Pr[\mathcal{A} \text{ wins in } H_1]$.
+By the PRF security, $|Pr[\mathcal{A} \text{ wins in } H_0] - Pr[\mathcal{A} \text{ wins in } H_1]| \le negl(\lambda)$.
+
+\textbf{Step 2: $H_1 \approx H_2$} [cite: 94]
+This step relies on the $\epsilon$-AU property of $\mathcal{H}$. We compare $H_1$ (oracle $R(h_s(\cdot))$) and $H_2$ (oracle $R'(\cdot)$).
+In $H_2$, every new message $m_i$ maps to a fresh, independent random value $R'(m_i)$.
+In $H_1$, this is also true... *unless* a hash collision occurs.
+
+Let **BAD** be the event that a collision occurs among any of the $q$ queries $\mathcal{A}$ makes, or its final forgery $m^*$ (for a total of $q+1$ messages)[cite: 97, 100].
+$$ \text{BAD} \equiv \exists i \neq j \in \{1, \dots, q, *\} \text{ s.t. } m_i \neq m_j \text{ and } h_s(m_i) = h_s(m_j) $$
+\begin{itemize}
+    \item \textbf{If $\neg$BAD occurs (no collision):} Then every distinct message $m_i$ maps to a distinct digest $d_i = h_s(m_i)$. Since $R$ is a random function, $R(d_i)$ is a fresh random value for each $i$. This is *identical* to the behavior of $H_2$. So, $Pr[\mathcal{A} \text{ wins } | \neg\text{BAD}, H_1] = Pr[\mathcal{A} \text{ wins } | \neg\text{BAD}, H_2]$.
+    \item The only difference between the games is when BAD occurs. By the "Difference Lemma", the statistical distance between the games is bounded by the probability of this event: $SD(H_1, H_2) \le Pr[\text{BAD}]$[cite: 105].
+\end{itemize}
+
+\textbf{Bounding $Pr[\text{BAD}]$:} [cite: 109]
+We have $q+1$ messages in total. The number of pairs is $\binom{q+1}{2}$.
+We can use a Union Bound over all pairs:
+$$ Pr[\text{BAD}] \le \sum_{1 \le i < j \le q+1} Pr[h_s(m_i) = h_s(m_j)] $$ [cite: 112]
+By the $\epsilon$-AU property, each term is $\le \epsilon$[cite: 60].
+$$ Pr[\text{BAD}] \le \binom{q+1}{2} \cdot \epsilon $$ [cite: 112]
+Since $q = poly(\lambda)$ and $\epsilon = negl(\lambda)$, $Pr[\text{BAD}]$ is negligible.
+Thus, $Pr[\mathcal{A} \text{ wins in } H_1] \le Pr[\mathcal{A} \text{ wins in } H_2] + Pr[\text{BAD}] \approx Pr[\mathcal{A} \text{ wins in } H_2]$.
+
+\textbf{Step 3: Bounding the Win Probability in $H_2$}
+In $H_2$, $\mathcal{A}$ interacts with a truly random function $R'$. It makes $q$ queries and gets $q$ random tags. It then outputs $(m^*, \tau^*)$ for a new message $m^*$. The probability that $\tau^*$ equals the fresh random value $R'(m^*)$ is $1/2^n$.
+$Pr[\mathcal{A} \text{ wins in } H_2] \le \frac{1}{2^n} = negl(\lambda)$.
+
+\textbf{Conclusion:}
+Putting it all together:
+$Pr[\mathcal{A} \text{ wins in } H_0] \approx Pr[\mathcal{A} \text{ wins in } H_1] \approx Pr[\mathcal{A} \text{ wins in } H_2] \le negl(\lambda)$.
+Therefore, the probability of winning the real game is negligible.
+\end{proof}
+
+\section{Examples of AU Hash Families} [cite: 113]
+To use the Hash-then-MAC construction, we need concrete AU hash families.
+
+\subsection{Example 1: Vector Dot Product} [cite: 116]
+\begin{itemize}
+    \item \textbf{Field:} Let $\mathbb{F} = GF(2^n)$[cite: 114].
+    \item \textbf{Messages:} $m = (m_1, \dots, m_d)$ where each $m_i \in \mathbb{F}$.
+    \item \textbf{Keys:} $s = (s_1, \dots, s_d)$ where each $s_i \in \mathbb{F}$. The key space $\mathcal{S} = \mathbb{F}^d$[cite: 116].
+    \item \textbf{Hash Function:} $h_s(m) = \sum_{i=1}^d s_i \cdot m_i = \langle \vec{s}, \vec{m} \rangle$ [cite: 116] (This is the dot product in $\mathbb{F}$).
+\end{itemize}
+
+\textbf{Proof of AU Property:}
+We want to calculate $Pr_{s \in \mathbb{F}^d}[h_s(m) = h_s(m')]$ for $m \neq m'$[cite: 121, 123].
+$$ h_s(m) = h_s(m') \implies \sum_{i=1}^d s_i m_i = \sum_{i=1}^d s_i m'_i $$
+$$ \implies \sum_{i=1}^d s_i (m_i - m'_i) = 0 $$ [cite: 125]
+Let $\delta_i = m_i - m'_i$[cite: 119]. Since $m \neq m'$, at least one $\delta_j \neq 0$. Without loss of generality, assume $\delta_1 \neq 0$[cite: 122].
+We can now solve for $s_1$:
+$$ s_1 \delta_1 = - \sum_{i=2}^d s_i \delta_i $$
+Since $\delta_1 \neq 0$, it has a multiplicative inverse in $\mathbb{F}$.
+$$ s_1 = (\delta_1)^{-1} \cdot \left( - \sum_{i=2}^d s_i \delta_i \right) $$ [cite: 126]
+\textbf{Explanation:} This equation shows that for any possible choice of $s_2, \dots, s_d$ (of which there are $|\mathbb{F}|^{d-1}$ choices), the value of $s_1$ is \textit{uniquely determined} for a collision to occur.
+The total number of keys $s \in \mathcal{S}$ is $|\mathbb{F}|^d$.
+The number of keys causing a collision for this fixed $m, m'$ is $|\mathbb{F}|^{d-1}$ (since $s_2, \dots, s_d$ can be anything, but $s_1$ is then fixed).
+$$ Pr[\text{collision}] = \frac{\text{\# collision keys}}{\text{\# total keys}} = \frac{|\mathbb{F}|^{d-1}}{|\mathbb{F}|^d} = \frac{1}{|\mathbb{F}|} = \frac{1}{2^n} $$ [cite: 127]
+This family is $\epsilon$-AU with $\epsilon = 2^{-n}$. It is perfectly universal.
+
+\subsection{Example 2: Polynomial Evaluation} [cite: 130]
+\begin{itemize}
+    \item \textbf{Field:} Let $\mathbb{F} = GF(2^n)$[cite: 128].
+    \item \textbf{Messages:} $m = (m_1, \dots, m_d)$ where each $m_i \in \mathbb{F}$.
+    \item \textbf{Keys:} $s \in \mathbb{F}$. The key $s$ is just a single element from the field[cite: 128].
+    \item \textbf{Hash Function:} We treat the message blocks $m_i$ as coefficients of a polynomial of degree $d-1$:
+    $$ q_m(x) = \sum_{j=1}^d m_j x^{j-1} $$ [cite: 130]
+    The hash is the evaluation of this polynomial at the key $s$:
+    $$ h_s(m) = q_m(s) $$ [cite: 130]
+\end{itemize}
+
+\textbf{Proof of AU Property:}
+We want $Pr_{s \in \mathbb{F}}[h_s(m) = h_s(m')]$ for $m \neq m'$[cite: 131].
+$$ h_s(m) = h_s(m') \implies q_m(s) = q_{m'}(s) \implies q_m(s) - q_{m'}(s) = 0 $$ [cite: 133]
+This is equivalent to:
+$$ q_{m-m'}(s) = \sum_{j=1}^d (m_j - m'_j) s^{j-1} = 0 $$ [cite: 134-135]
+Let $q_{\delta}(x) = q_{m-m'}(x)$. Since $m \neq m'$, the vector of coefficients $(\delta_1, \dots, \delta_d)$ is not all-zero, so $q_{\delta}(x)$ is a non-zero polynomial.
+The degree of $q_{\delta}(x)$ is at most $d-1$[cite: 136].
+By the \textbf{Schwartz-Zippel Lemma} (or the fact that a non-zero polynomial of degree $d-1$ over a field can have at most $d-1$ roots), there are at most $d-1$ values of $s \in \mathbb{F}$ that can be a root of $q_{\delta}(x)$.
+$$ Pr[\text{collision}] = \frac{\text{\# of roots}}{\text{\# of possible keys}} \le \frac{d-1}{|\mathbb{F}|} = \frac{d-1}{2^n} $$ [cite: 136]
+This family is $\epsilon$-AU with $\epsilon = (d-1)/2^n$. This is negligible as long as the number of blocks $d$ is polynomial.
+
+\subsection{Example 3: CBC-MAC as a Hash Function} [cite: 137]
+The CBC-MAC construction itself can be viewed as a way to construct an AU hash family[cite: 137].
+\begin{itemize}
+    \item \textbf{Construction:} Let $\mathcal{F} = \{F_s: \{0,1\}^n \rightarrow \{0,1\}^n\}$ be a PRF family. The hash key is $s$, the PRF key.
+    \item Let $m = (m_1, \dots, m_d)$. The CBC-MAC construction is [cite: 141-147]:
+    \begin{enumerate}
+        \item $t_0 = 0^n$ (a fixed IV)
+        \item $t_i = F_s(t_{i-1} \oplus m_i)$ for $i=1, \dots, d$
+    \end{enumerate}
+    \item \textbf{Hash Function:} $h_s(m) = t_d$.
+\end{itemize}
+
+\begin{thm}[Informal]
+If $\mathcal{F}$ is a secure PRF, then the CBC-MAC construction (for fixed-length messages $m$ of $d$ blocks) defines a \textbf{computationally $\epsilon$-AU} hash family[cite: 153].
+\end{thm}
+\textbf{Explanation:} This means that for any $m \neq m'$, the probability $Pr_s[h_s(m) = h_s(m')]$ is negligible. This is a \textit{computational} bound (it relies on the adversary's inability to break the PRF) rather than a purely \textit{statistical} one like the previous two examples. Proving this is more involved but shows that CBC-MAC is a secure method for hashing a long message into a short, pseudorandom tag.
+
+\section{Authenticated Encryption and CCA Security}
+So far, we have looked at two goals of symmetric cryptography in isolation:
+\begin{itemize}
+    \item \textbf{Privacy:} Ensuring messages are confidential (CPA-Secure SKE).
+    \item \textbf{Integrity:} Ensuring messages are authentic (UF-CMA MACs).
+\end{itemize}
+What's left is to combine them. This leads to the strongest notion of security for symmetric key encryption: non-malleability, also known as security against Chosen-Ciphertext Attacks (CCA).
+
+\subsection{Malleability and Chosen-Ciphertext Attacks (CCA)}
+\begin{defn}[Malleability]
+Malleability is the property of an encryption scheme where an adversary, upon seeing a ciphertext $c$, can modify it to create a new ciphertext $c'$ such that the corresponding plaintext $m'$ is meaningfully related to the original plaintext $m$, even without knowing $m$.
+\end{defn}
+
+This is a problem in many applications, such as sealed-bid auctions. If an adversary sees Alice's encrypted bid $c = Enc(k, \text{"100"})$ and can change it to $c' = Enc(k, \text{"99"})$ (a related plaintext), they can win the auction unfairly.
+
+Unfortunately, \textbf{CPA-security does not prevent malleability}.
+Consider the following CPA-secure SKE (a variant of CTR mode):
+\begin{itemize}
+    \item $Enc(k, m) = (r, F_k(r) \oplus m)$, where $r \leftarrow U_n$.
+\end{itemize}
+An adversary can intercept a ciphertext $c = (c_0, c_1) = (r, F_k(r) \oplus m)$. They can then create a new, "mangled" ciphertext:
+$$ \tilde{c} = (c_0, c_1 \oplus \vec{v}) $$
+where $\vec{v} = (1, 0, \dots, 0)$ is a vector.
+The decryption of $\tilde{c}$ will be:
+$$ Dec(k, \tilde{c}) = F_k(c_0) \oplus (c_1 \oplus \vec{v}) = F_k(r) \oplus (F_k(r) \oplus m \oplus \vec{v}) = m \oplus \vec{v} $$
+The adversary successfully flipped the first bit of the plaintext without ever knowing what it was. This is a classic malleability attack.
+
+To prevent this, we introduce the formal notion of \textbf{Non-Malleability (NM)}, which is defined using the \textbf{Chosen-Ciphertext Attack (CCA)} security game.
+
+\begin{defn}[CCA Security]
+A Symmetric Key Encryption scheme $\Pi = (Enc, Dec)$ is \textbf{secure against Chosen-Ciphertext Attacks (CCA-secure)} if for any PPT adversary $\mathcal{A}$, the advantage in the following game is negligible:
+$$ | Pr[GAME_{\Pi, \mathcal{A}}^{CCA}(\lambda, 0) = 1] - Pr[GAME_{\Pi, \mathcal{A}}^{CCA}(\lambda, 1) = 1] | \le negl(\lambda) $$
+\end{defn}
+
+The $GAME^{CCA}$ proceeds as follows:
+\begin{enumerate}
+    \item A key $k \leftarrow \mathcal{K}$ is generated.
+    \item The adversary $\mathcal{A}$ is given oracle access to $Enc(k, \cdot)$ and $Dec(k, \cdot)$.
+    \item $\mathcal{A}$ makes any number of encryption and decryption queries.
+    \item $\mathcal{A}$ submits two challenge messages $m_0^*, m_1^*$ (of equal length).
+    \item The challenger picks $b \leftarrow \{0, 1\}$, computes the challenge ciphertext $c^* \leftarrow Enc(k, m_b^*)$, and sends $c^*$ to $\mathcal{A}$.
+    \item $\mathcal{A}$ continues to make encryption and decryption queries, with one crucial restriction: \textbf{it cannot ask to decrypt $c^*$ itself}.
+    \item $\mathcal{A}$ outputs a guess $b'$. $\mathcal{A}$ wins if $b' = b$.
+\end{enumerate}
+This is a very strong definition. The adversary gets to see the decryptions of any ciphertext it wants, *except* the one it is trying to break.
+
+\subsection{A General Recipe: CPA + AUTH $\implies$ CCA}
+Proving CCA security directly is complex. A simpler "recipe" is to combine two properties: CPA security (which we know) and a new property, \textbf{Authenticity}.
+
+\begin{defn}[Authenticity (AUTH)]
+A SKE scheme $\Pi = (Enc, Dec)$ has \textbf{ciphertext authenticity} if it is computationally infeasible for an adversary to produce a new, \textit{valid} ciphertext that it did not see before.
+A ciphertext $\tilde{c}$ is \textbf{valid} if $Dec(k, \tilde{c}) \neq \perp$, where $\perp$ is a special error symbol indicating decryption failed.
+\end{defn}
+
+We formalize this with the $GAME^{auth}$:
+\begin{defn}[AUTH Security]
+A SKE $\Pi$ is \textbf{AUTH-secure} if for any PPT adversary $\mathcal{A}$, $Pr[GAME_{\Pi, \mathcal{A}}^{auth}(\lambda) = 1] \le negl(\lambda)$.
+\end{defn}
+The $GAME^{auth}$ proceeds as follows:
+\begin{enumerate}
+    \item A key $k \leftarrow \mathcal{K}$ is generated.
+    \item $\mathcal{A}$ is given oracle access to $Enc(k, \cdot)$. Let $Q = \{(m_i, c_i)\}$ be the set of query/response pairs.
+    \item $\mathcal{A}$ outputs a new ciphertext $\tilde{c}$.
+    \item $\mathcal{A}$ wins if $\tilde{c} \notin \{c_1, \dots, c_q\}$ (it's a new ciphertext) AND $Dec(k, \tilde{c}) \neq \perp$ (it's valid).
+\end{enumerate}
+
+\begin{thm}
+If a SKE scheme $\Pi$ is both \textbf{CPA-secure} and \textbf{AUTH-secure}, then it is \textbf{CCA-secure}.
+\end{thm}
+
+\begin{proof}[Proof Sketch]
+We prove this by reduction. Assume, for contradiction, that an adversary $\mathcal{A}_{CCA}$ can break the $CCA$ security of $\Pi$. We will show that this implies $\Pi$ is either not $CPA$-secure or not $AUTH$-secure.
+
+We construct a $CPA$ adversary $\mathcal{A}_{CPA}$ that uses $\mathcal{A}_{CCA}$ as a subroutine. $\mathcal{A}_{CPA}$ will simulate the $CCA$ game for $\mathcal{A}_{CCA}$.
+\begin{itemize}
+    \item \textbf{Challenger:} $\mathcal{C}_{CPA}$ (the $CPA$ challenger).
+    \item \textbf{Reducer:} $\mathcal{A}_{CPA}$ (our reduction).
+    \item \textbf{Adversary:} $\mathcal{A}_{CCA}$ (the adversary we assume exists).
+\end{itemize}
+
+\textbf{The Simulation:}
+$\mathcal{A}_{CPA}$ simulates the $GAME^{CCA}$ for $\mathcal{A}_{CCA}$:
+\begin{enumerate}
+    \item \textbf{Encryption Queries:} When $\mathcal{A}_{CCA}$ asks to encrypt $m_i$, $\mathcal{A}_{CPA}$ passes $m_i$ to its own $CPA$ oracle, $\mathcal{C}_{CPA}$, and gets back $c_i$. $\mathcal{A}_{CPA}$ returns $c_i$ to $\mathcal{A}_{CCA}$. $\mathcal{A}_{CPA}$ stores the pair $(m_i, c_i)$.
+    \item \textbf{Challenge Query:} When $\mathcal{A}_{CCA}$ submits $m_0^*, m_1^*$, $\mathcal{A}_{CPA}$ passes them to $\mathcal{C}_{CPA}$ and gets back the challenge $c^*$. $\mathcal{A}_{CPA}$ gives $c^*$ to $\mathcal{A}_{CCA}$.
+    \item \textbf{Decryption Queries:} When $\mathcal{A}_{CCA}$ asks to decrypt $\tilde{c}$, $\mathcal{A}_{CPA}$ must answer. It does not have a real decryption oracle.
+        \begin{itemize}
+            \item \textbf{Rule 1:} If $\tilde{c} = c^*$, $\mathcal{A}_{CPA}$ returns $\perp$ (as per $GAME^{CCA}$ rules).
+            \item \textbf{Rule 2:} If $\tilde{c}$ is on its list of known ciphertexts (i.e., $\tilde{c} = c_i$ for some $i$), $\mathcal{A}_{CPA}$ returns the corresponding $m_i$.
+            \item \textbf{Rule 3:} If $\tilde{c}$ is new (not $c^*$ and not $c_i$), $\mathcal{A}_{CPA}$ returns $\perp$.
+        \end{itemize}
+    \item \textbf{Guess:} $\mathcal{A}_{CCA}$ outputs a guess $b'$. $\mathcal{A}_{CPA}$ outputs the same $b'$.
+\end{enumerate}
+
+\textbf{Analysis of the Reduction:}
+Let $G_{CCA}$ be the real $CCA$ game, and $G'$ be the simulated game $G'$ run by $\mathcal{A}_{CPA}$.
+The simulation in $G'$ is perfect, \textit{unless} Rule 3 fails.
+Rule 3 fails if $\mathcal{A}_{CCA}$ submits a new ciphertext $\tilde{c}$ for which the \textit{real} answer is $Dec(k, \tilde{c}) = m' \neq \perp$.
+Let's call this the **BAD** event.
+$$ \text{BAD} \equiv \mathcal{A}_{CCA} \text{ queries } \tilde{c} \notin \{c_1, \dots, c_q\} \text{ s.t. } Dec(k, \tilde{c}) \neq \perp $$
+This is \textit{exactly} the winning condition for the $GAME^{auth}$!
+Because $\Pi$ is $AUTH$-secure, we know $Pr[BAD] \le negl(\lambda)$.
+
+By the Difference Lemma, the adversary's advantage can only differ by at most $Pr[BAD]$:
+$$ | Adv_{G_{CCA}}(\mathcal{A}_{CCA}) - Adv_{G'}(\mathcal{A}_{CCA}) | \le Pr[BAD] \le negl(\lambda) $$
+So, $Adv_{G_{CCA}}(\mathcal{A}_{CCA}) \approx Adv_{G'}(\mathcal{A}_{CCA})$.
+
+Now, look at the game $G'$. In $G'$, the decryption oracle is useless: it either returns $\perp$ or information $\mathcal{A}_{CCA}$ already knew (the $m_i$ for a $c_i$). It provides no new information.
+Therefore, the game $G'$ is effectively just the $CPA$ game.
+$$ Adv_{G'}(\mathcal{A}_{CCA}) = Adv_{CPA}(\mathcal{A}_{CPA}) $$
+Because $\Pi$ is $CPA$-secure, we know $Adv_{CPA}(\mathcal{A}_{CPA}) \le negl(\lambda)$.
+
+By the triangle inequality:
+$$ Adv_{G_{CCA}}(\mathcal{A}_{CCA}) \approx Adv_{G'}(\mathcal{A}_{CCA}) = Adv_{CPA}(\mathcal{A}_{CPA}) \le negl(\lambda) $$
+Therefore, the advantage of $\mathcal{A}_{CCA}$ in the real $CCA$ game must be negligible.
+\end{proof}
+
+\subsection{Constructions for Authenticated Encryption}
+We now know that $CCA \iff CPA + AUTH$. How do we build a scheme that is both?
+The idea is to combine a CPA-secure SKE (let's call it $Enc$) and a UF-CMA MAC (let's call it $Tag$). We need two independent keys, $k_e$ for $Enc$ and $k_m$ for $Tag$.
+
+There are three main ways to combine them:
+
+\subsubsection{Method 1: Encrypt-and-MAC (E\&M)}
+We encrypt and MAC the \textit{plaintext} in parallel.
+$$ c' = (c, \tau) \quad \text{where} \quad c \leftarrow Enc(k_e, m) \quad \text{and} \quad \tau \leftarrow Tag(k_m, m) $$
+\textbf{This is not secure}. It fails to provide CPA security.
+\textbf{Why?} The $Tag$ function is applied to $m$. If the $Tag$ function is deterministic, an adversary can check if two plaintexts are equal. $Enc$ is randomized to prevent this, but $\tau$ leaks the information. For example, if $\mathcal{A}$ encrypts $m_0$ and $m_1$ and sees $(c_0, \tau_0)$ and $(c_1, \tau_1)$, if $\tau_0 = \tau_1$, it knows $m_0=m_1$. This breaks the $CPA$ game.
+
+\subsubsection{Method 2: MAC-then-Encrypt (M\&E)}
+We MAC the plaintext, then encrypt \textit{both}.
+$$ c' \leftarrow Enc(k_e, m || \tau) \quad \text{where} \quad \tau \leftarrow Tag(k_m, m) $$
+\textbf{This is not secure}. This construction can fail $AUTH$.
+\textbf{Why?} The $Enc$ scheme only guarantees privacy (CPA), not integrity. An SKE scheme might be malleable.
+For example, consider a bad SKE: $Enc(k, m || \tau) = (Enc(k, m), \tau)$. This is CPA-secure.
+But the $Dec$ function, $Dec(k, (c, \tau'))$, might just decrypt $c$ and ignore $\tau'$. An attacker could flip bits in $\tau'$, and the ciphertext would still decrypt to a valid $m$, failing the $AUTH$ property.
+
+\subsubsection{Method 3: Encrypt-then-MAC (EtM)}
+We encrypt the plaintext first, then MAC the \textit{ciphertext}. This is the secure method.
+\begin{itemize}
+    \item $Enc'( (k_e, k_m), m)$:
+        \begin{enumerate}
+            \item $c \leftarrow Enc(k_e, m)$
+            \item $\tau \leftarrow Tag(k_m, c)$
+            \item Output $c' = (c, \tau)$
+        \end{enumerate}
+    \item $Dec'( (k_e, k_m), c'=(c, \tau) )$:
+        \begin{enumerate}
+            \item If $Vrfy(k_m, c, \tau) \neq \text{accept}$, output $\perp$.
+            \item Else, $m \leftarrow Dec(k_e, c)$.
+            \item Output $m$.
+        \end{enumerate}
+\end{itemize}
+
+\begin{thm}
+The \textbf{Encrypt-then-MAC (EtM)} construction is $CCA$-secure, provided that $\Pi_{SKE}$ is $CPA$-secure and $\Pi_{MAC}$ is a $UF-CMA$ MAC (with unique/deterministic tags).
+\end{thm}
+
+\begin{proof}[Proof Sketch]
+We prove $CPA + AUTH$, which implies $CCA$.
+\begin{enumerate}
+    \item \textbf{Proof of $CPA$ Security:}
+    We build a reduction $\mathcal{A}_{CPA-SKE}$ that breaks the $CPA$ security of
+    \begin{itemize}
+        \item $\mathcal{A}_{CPA-SKE}$ (the reducer) gets a $CPA$ oracle from its challenger.
+        \item To simulate the $EtM$ game, $\mathcal{A}_{CPA-SKE}$ needs to produce tags. It picks its own MAC key $k_m$.
+        \item \textbf{Encryption Query $m$:} $\mathcal{A}_{CPA-SKE}$ gets $c$ from its oracle, computes $\tau = Tag(k_m, c)$ itself, and returns $(c, \tau)$.
+        \item \textbf{Challenge Query $m_0^*, m_1^*$:} $\mathcal{A}_{CPA-SKE}$ passes this up to its oracle, gets back $c^*$, computes $\tau^* = Tag(k_m, c^*)$, and returns $(c^*, \tau^*)$.
+        \item \textbf{Guess:} $\mathcal{A}_{CPA-SKE}$ outputs whatever $\mathcal{A}_{CPA-EtM}$ outputs.
+        \item \textbf{Analysis:} This simulation is perfect. The tag $\tau$ is computed on an already-encrypted ciphertext $c$, so it leaks no information about $m$ that $c$ didn't already leak. The advantage is identical. $Adv_{CPA-EtM} = Adv_{CPA-SKE} \le negl(\lambda)$.
+    \end{itemize}
+
+    \item \textbf{Proof of $AUTH$ Security:}
+    We build a reduction $\mathcal{A}_{UF-CMA}$ that breaks the $UF-CMA$ security of $Tag$ if an adversary $\mathcal{A}_{AUTH}$ breaks $EtM$.
+    \begin{itemize}
+        \item $\mathcal{A}_{UF-CMA}$ (the reducer) gets a $Tag$ oracle from its challenger.
+        \item To simulate the $EtM$ game, $\mathcal{A}_{UF-CMA}$ needs to encrypt. It picks its own SKE key $k_e$.
+        \item \textbf{Encryption Query $m$:} $\mathcal{A}_{UF-CMA}$ computes $c = Enc(k_e, m)$ itself. It then queries its $Tag$ oracle $\mathcal{O}_{Tag}(c)$ to get $\tau$. It returns $(c, \tau)$.
+        \item \textbf{Adversary Forgery:} $\mathcal{A}_{AUTH}$ outputs a forgery $(\tilde{c}, \tilde{\tau})$.
+        \item \textbf{Reducer Forgery:} $\mathcal{A}_{UF-CMA}$ outputs $(\tilde{c}, \tilde{\tau})$ as its own forgery.
+        \item \textbf{Analysis:}
+            \begin{itemize}
+                \item $\mathcal{A}_{AUTH}$ wins if $(\tilde{c}, \tilde{\tau})$ is new AND $Dec(k_e, \tilde{c}) \neq \perp$.
+                \item $\mathcal{A}_{UF-CMA}$ wins if $Vrfy(k_m, \tilde{c}) = \tilde{\tau}$ AND $\tilde{c}$ is new (assuming standard UF-CMA, since $\tilde{c}$ is the "message" for the MAC).
+            \end{itemize}
+        \item The $Dec'$ algorithm for $EtM$ \textit{first} checks the tag. $Dec(k_e, \tilde{c}) \neq \perp$ can only happen if $Vrfy(k_m, \tilde{c}, \tilde{\tau}) = \text{accept}$.
+        \item We just need to check that the "newness" conditions align.
+        \item $\mathcal{A}_{AUTH}$ queries $m_i \to (c_i, \tau_i)$. $\mathcal{A}_{UF-CMA}$ queries $c_i \to \tau_i$.
+        \item $\mathcal{A}_{AUTH}$ outputs $(\tilde{c}, \tilde{\tau}) \notin \{(c_i, \tau_i)\}$.
+        \item If the $Tag$ is deterministic ("UNIQUE TAGS"), then it's impossible to have $\tilde{c} = c_i$ but $\tilde{\tau} \neq \tau_i$ and $Vrfy = \text{accept}$.
+        \item Therefore, any valid forgery from $\mathcal{A}_{AUTH}$ *must* have $\tilde{c} \notin \{c_i\}$.
+        \item This is exactly the winning condition for $\mathcal{A}_{UF-CMA}$!
+        \item Thus, $Pr[\mathcal{A}_{AUTH} \text{ wins}] \le Pr[\mathcal{A}_{UF-CMA} \text{ wins}] \le negl(\lambda)$.
+    \end{itemize}
+\end{enumerate}
+Since $EtM$ is both $CPA$-secure and $AUTH$-secure, it is $CCA$-secure.
+\end{proof}
 \end{document}
